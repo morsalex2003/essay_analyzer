@@ -1,12 +1,5 @@
-import spacy
+from src.reader import read_essay
 
-nlp = spacy.load("en_core_web_sm")
+text = read_essay("essays/sample.txt")
 
-text = "I am learning computational linguistics."
-
-doc = nlp(text)
-
-for token in doc:
-    print(token.text)
-    print(token.lemma_)
-    print(token.pos_)
+print(text)
