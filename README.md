@@ -20,3 +20,16 @@ Octanove Labs and is distributed under the
 
 See [data/README.md](data/README.md) and the upstream repository for the full
 attribution, terms, disclaimers, and references.
+
+## EFLLex
+
+The project also includes
+[EFLLex](https://cental.uclouvain.be/cefrlex/efllex/download/), created by
+Luise Dürlich and Thomas François. EFLLex describes how English lemmas are
+distributed across learner-oriented pedagogical materials at levels A1-C1.
+It is licensed under CC BY-NC-SA 4.0 and therefore cannot be used commercially.
+
+EFLLex does not replace CEFR-J. CEFR-J associates lexical entries with CEFR
+bands, while EFLLex provides level-specific normalized frequency distributions
+from pedagogical materials. See [data/efllex/README.md](data/efllex/README.md)
+for attribution and dataset details.
