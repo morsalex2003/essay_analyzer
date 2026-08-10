@@ -1,11 +1,10 @@
-import spacy
-
 from spacy.symbols import NOUN
 from spacy.tokens import Doc
 from wordfreq import zipf_frequency
 
+from src.nlp.pipeline import nlp
 
-nlp = spacy.load("en_core_web_sm")
+
 frequency_lemmatizer = nlp.get_pipe("lemmatizer")
 
 

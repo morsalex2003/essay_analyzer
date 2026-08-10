@@ -1,4 +1,5 @@
-from src.lexical import calculate_mattr, calculate_ttr, preprocess_tokens
+from src.lexical import calculate_mattr, calculate_ttr
+from src.lexical.preprocessing import preprocess_tokens
 
 
 def test_preprocess_tokens_returns_normalized_content_words():

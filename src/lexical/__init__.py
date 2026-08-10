@@ -8,7 +8,6 @@ from src.lexical.frequency import (
     repetition_percentage,
     word_frequencies,
 )
-from src.lexical.preprocessing import preprocess_tokens
 from src.lexical.sophistication import lexical_sophistication
 
 
@@ -20,7 +19,6 @@ __all__ = (
     "frequency_analysis",
     "lexical_sophistication",
     "most_common_words",
-    "preprocess_tokens",
     "repeated_words",
     "repetition_percentage",
     "word_frequencies",

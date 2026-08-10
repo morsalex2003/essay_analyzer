@@ -12,15 +12,14 @@ from src.lexical.frequency import (
 from src.lexical.preprocessing import preprocess_tokens
 from src.lexical.sophistication import lexical_sophistication
 from src.reader import read_essay
-from src.statistics import (
-    count_characters,
-    count_words,
-    count_sentences,
-    average_sentence_length,
+from src.statistics import count_characters, count_words
+from src.syntax.complexity import (
+    analyze_syntax,
+    complex_sentence_percentage,
     count_pos,
+    count_sentences,
     count_subordinate_clauses,
     longest_sentence_length,
-    complex_sentence_percentage,
 )
 
 text = read_essay("essays/sample.txt")
@@ -35,11 +34,11 @@ ttr_tokens = preprocess_tokens(text, content_words_only=False)
 unique_words = len(set(ttr_tokens))
 diversity = calculate_ttr(ttr_tokens)
 mattr = calculate_mattr(lexical_tokens)
-average_length = average_sentence_length(text)
 pos_counts = count_pos(text)
 subordinate_clauses = count_subordinate_clauses(text)
 longest_sentence = longest_sentence_length(text)
 complex_percentage = complex_sentence_percentage(text)
+syntax_data = analyze_syntax(text)
 common_words = most_common_words(text)
 repetitions = repeated_words(text)
 repetition = repetition_percentage(text)
@@ -57,7 +56,6 @@ print("Unique words:", unique_words)
 print("Lexical diversity:")
 print("TTR:", round(diversity, 3))
 print("MATTR:", round(mattr, 3))
-print("Average sentence length:", round(average_length, 1))
 print("Nouns:", pos_counts.get("NOUN", 0))
 print("Verbs:", pos_counts.get("VERB", 0))
 print("Adjectives:", pos_counts.get("ADJ", 0))
@@ -65,6 +63,25 @@ print("Adverbs:", pos_counts.get("ADV", 0))
 print("Subordinate clauses:", subordinate_clauses)
 print("Longest sentence:", longest_sentence, "words")
 print("Complex sentences:", round(complex_percentage, 1), "%")
+
+print()
+print("Syntax Complexity:")
+print("Total sentences:", syntax_data["sentences"])
+print(
+    "Average sentence length:",
+    round(syntax_data["average_sentence_length"], 2)
+)
+print(
+    "Sentence length variation:",
+    round(syntax_data["sentence_length_std"], 2)
+)
+print("Total clauses:", syntax_data["total_clauses"])
+print("Clause density:", round(syntax_data["clause_density"], 2))
+print(
+    "Subordination ratio:",
+    round(syntax_data["subordination_ratio"], 2)
+)
+
 print("Most common words:", common_words)
 print("Repeated words:")
 for word, frequency in repetitions.items():
