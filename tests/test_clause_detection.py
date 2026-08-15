@@ -1,4 +1,5 @@
 import pytest
+from spacy.tokens import Doc
 
 from src.nlp.pipeline import nlp
 from src.syntax.clauses import detect_clauses
@@ -83,6 +84,59 @@ APPROVED_SENTENCES = (
 )
 
 
+V21_VALIDATION_CASES = (
+    (
+        (
+            "To conclude, I think, that is really important for managers "
+            "to educate their employees for the future company's succeed."
+        ),
+        ("think", "is"),
+        (),
+        ("conclude", "educate"),
+    ),
+    (
+        (
+            "While Emily claims that smart home systems are unsafe because "
+            "of collecting your personal files, I believe that it is very "
+            "convenient and helpful if you choose best option."
+        ),
+        ("claims", "are", "believe", "is", "choose"),
+        ("claims", "are", "is", "choose"),
+        ("collecting",),
+    ),
+    (
+        (
+            "While Emily believes that lowering the price of education can "
+            "help in raising genius people, 1 suppose that it can lead to "
+            "growth of non-professionals and inequality in the companies."
+        ),
+        ("believes", "help", "suppose", "lead"),
+        ("believes", "help", "lead"),
+        ("lowering", "raising"),
+    ),
+    (
+        (
+            "Moreover, residents wanted to became a volunteer to help their "
+            "country to flourish."
+        ),
+        ("wanted",),
+        (),
+        ("became", "help", "flourish"),
+    ),
+    (
+        (
+            "While the first student thinks about gaining knowledges in "
+            "university or in college, I believe that people attend to "
+            "higher education because of new meetings during their "
+            "education."
+        ),
+        ("thinks", "believe", "attend"),
+        ("thinks", "attend"),
+        ("gaining",),
+    ),
+)
+
+
 def _head_texts(clause_summary, key):
     head_texts = []
 
@@ -90,6 +144,52 @@ def _head_texts(clause_summary, key):
         head_texts.append(token.text)
 
     return tuple(head_texts)
+
+
+def _assert_clause_heads(
+    text,
+    expected_finite_heads,
+    expected_dependent_heads,
+    expected_non_finite_heads,
+):
+    clause_summary = detect_clauses(nlp(text))
+
+    assert (
+        _head_texts(clause_summary, "finite_clause_heads")
+        == expected_finite_heads
+    )
+    assert (
+        _head_texts(clause_summary, "dependent_clause_heads")
+        == expected_dependent_heads
+    )
+    assert (
+        _head_texts(clause_summary, "non_finite_heads")
+        == expected_non_finite_heads
+    )
+    assert clause_summary["unknown_heads"] == []
+
+
+@pytest.mark.parametrize(
+    (
+        "text",
+        "expected_finite_heads",
+        "expected_dependent_heads",
+        "expected_non_finite_heads",
+    ),
+    V21_VALIDATION_CASES,
+)
+def test_v21_validation_regressions(
+    text,
+    expected_finite_heads,
+    expected_dependent_heads,
+    expected_non_finite_heads,
+):
+    _assert_clause_heads(
+        text,
+        expected_finite_heads,
+        expected_dependent_heads,
+        expected_non_finite_heads,
+    )
 
 
 @pytest.mark.parametrize(
@@ -149,6 +249,110 @@ def test_auxiliary_imperative_and_infinitive_structures(
     assert (
         _head_texts(clause_summary, "non_finite_heads")
         == expected_non_finite_heads
+    )
+
+
+@pytest.mark.parametrize(
+    "text, expected_finite_head, expected_non_finite_head",
+    (
+        ("I want to study.", "want", "study"),
+        ("I wanted to became a volunteer.", "wanted", "became"),
+        ("I hope to went abroad.", "hope", "went"),
+    ),
+)
+def test_infinitive_marker_has_priority_in_complements(
+    text,
+    expected_finite_head,
+    expected_non_finite_head,
+):
+    _assert_clause_heads(
+        text,
+        (expected_finite_head,),
+        (),
+        (expected_non_finite_head,),
+    )
+
+
+@pytest.mark.parametrize(
+    "text, expected_finite_head, expected_non_finite_head",
+    (
+        (
+            "We succeeded by studying every day.",
+            "succeeded",
+            "studying",
+        ),
+        (
+            "After finishing the task, we left.",
+            "left",
+            "finishing",
+        ),
+        (
+            "They acted without considering the consequences.",
+            "acted",
+            "considering",
+        ),
+    ),
+)
+def test_guarded_pcomp_is_a_non_finite_unit_only(
+    text,
+    expected_finite_head,
+    expected_non_finite_head,
+):
+    clause_summary = detect_clauses(nlp(text))
+
+    assert _head_texts(clause_summary, "finite_clause_heads") == (
+        expected_finite_head,
+    )
+    assert clause_summary["dependent_clause_heads"] == []
+    assert _head_texts(clause_summary, "non_finite_heads") == (
+        expected_non_finite_head,
+    )
+    assert clause_summary["sentences_with_finite_subordination"] == set()
+
+
+def test_non_predicative_parataxis_is_not_a_clause():
+    doc = Doc(
+        nlp.vocab,
+        words=("This", "works", ",", "perhaps", "."),
+        spaces=(True, False, True, False, False),
+        heads=(1, 1, 1, 1, 1),
+        deps=("nsubj", "ROOT", "punct", "parataxis", "punct"),
+        pos=("PRON", "VERB", "PUNCT", "ADV", "PUNCT"),
+        tags=("DT", "VBZ", ",", "RB", "."),
+        morphs=("", "VerbForm=Fin|Tense=Pres", "", "", ""),
+    )
+    clause_summary = detect_clauses(doc)
+
+    assert _head_texts(clause_summary, "finite_clause_heads") == ("works",)
+    assert clause_summary["dependent_clause_heads"] == []
+    assert clause_summary["non_finite_heads"] == []
+    assert clause_summary["unknown_heads"] == []
+
+
+def test_normal_finite_ccomp_remains_dependent():
+    _assert_clause_heads(
+        "I think that education is important.",
+        ("think", "is"),
+        ("is",),
+        (),
+    )
+
+
+def test_prepositional_object_is_not_a_pcomp_predicative_unit():
+    _assert_clause_heads(
+        "She learned about the project.",
+        ("learned",),
+        (),
+        (),
+    )
+
+
+def test_participial_modifier_without_pcomp_is_not_added():
+    _assert_clause_heads(
+        "The broken window needs repair.",
+        ("needs",),
+        (),
+        (),
     )
 
 

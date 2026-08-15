@@ -11,6 +11,8 @@ PREDICATIVE_DEPENDENCIES = (
     "csubjpass",
     "acl",
     "conj",
+    "parataxis",
+    "pcomp",
 )
 
 DEPENDENT_CLAUSAL_DEPENDENCIES = (
@@ -33,6 +35,16 @@ SUBJECT_DEPENDENCIES = (
 
 AUXILIARY_DEPENDENCIES = ("aux", "auxpass", "cop")
 NON_FINITE_VERB_FORMS = ("Inf", "Ger", "Part")
+INFINITIVAL_COMPLEMENT_DEPENDENCIES = (
+    "advcl",
+    "ccomp",
+    "xcomp",
+    "relcl",
+    "csubj",
+    "csubjpass",
+    "acl",
+    "pcomp",
+)
 
 
 def _has_copular_support(token: Token) -> bool:
@@ -43,10 +55,7 @@ def _has_copular_support(token: Token) -> bool:
     return False
 
 
-def _is_predicative_head(token: Token) -> bool:
-    if token.dep_ not in PREDICATIVE_DEPENDENCIES:
-        return False
-
+def _has_predicative_form(token: Token) -> bool:
     if token.pos_ == "VERB" or token.pos_ == "AUX":
         return True
 
@@ -104,6 +113,10 @@ def _is_imperative_root(token: Token) -> bool:
 def _classify_finiteness(token: Token) -> str:
     verb_forms = token.morph.get("VerbForm")
 
+    if token.dep_ in INFINITIVAL_COMPLEMENT_DEPENDENCIES:
+        if _has_infinitive_marker(token):
+            return "non_finite"
+
     if "Fin" in verb_forms:
         return "finite"
 
@@ -118,6 +131,52 @@ def _classify_finiteness(token: Token) -> str:
             return "non_finite"
 
     return "unknown"
+
+
+def _is_supported_finite_parataxis(token: Token) -> bool:
+    if not _has_predicative_form(token):
+        return False
+
+    if _classify_finiteness(token) != "finite":
+        return False
+
+    if _has_own_subject(token):
+        return True
+
+    if _has_finite_support(token):
+        return True
+
+    verb_forms = token.morph.get("VerbForm")
+    return token.pos_ == "AUX" and "Fin" in verb_forms
+
+
+def _is_supported_non_finite_pcomp(token: Token) -> bool:
+    if token.pos_ != "VERB" and token.pos_ != "AUX":
+        return False
+
+    if _has_finite_support(token):
+        return False
+
+    verb_forms = token.morph.get("VerbForm")
+
+    for verb_form in verb_forms:
+        if verb_form in NON_FINITE_VERB_FORMS:
+            return True
+
+    return _has_infinitive_marker(token)
+
+
+def _is_predicative_head(token: Token) -> bool:
+    if token.dep_ not in PREDICATIVE_DEPENDENCIES:
+        return False
+
+    if token.dep_ == "parataxis":
+        return _is_supported_finite_parataxis(token)
+
+    if token.dep_ == "pcomp":
+        return _is_supported_non_finite_pcomp(token)
+
+    return _has_predicative_form(token)
 
 
 def _coordination_anchor(token: Token) -> Token:

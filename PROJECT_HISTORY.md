@@ -161,6 +161,14 @@ finite clauses. Coordinated predicates are not automatically counted as
 separate clauses; a coordinated finite predicate needs evidence of separate
 predication, primarily its own subject.
 
+Validation on learner English led to three conservative detector refinements:
+
+- finite `parataxis` is recognized when it has independent predicate evidence;
+- an explicit infinitive marker takes precedence over conflicting finite
+  morphology in complement structures;
+- verbal non-finite `pcomp` structures are counted as non-finite predicative
+  units when they have no finite auxiliary or copular support.
+
 ### Reason
 
 The previous `total_clauses` implementation counted `VERB` tokens. That proxy
