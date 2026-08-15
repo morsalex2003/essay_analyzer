@@ -76,7 +76,17 @@ print(
     round(syntax_data["sentence_length_std"], 2)
 )
 print("Total clauses:", syntax_data["total_clauses"])
+print("Finite clauses:", syntax_data["finite_clauses"])
+print("Dependent finite clauses:", syntax_data["dependent_clauses"])
+print(
+    "Non-finite predicative units:",
+    syntax_data["non_finite_predicative_units"]
+)
 print("Clause density:", round(syntax_data["clause_density"], 2))
+print(
+    "Dependent clause ratio:",
+    round(syntax_data["dependent_clause_ratio"], 2)
+)
 print(
     "Subordination ratio:",
     round(syntax_data["subordination_ratio"], 2)

@@ -139,3 +139,38 @@ syntax analysis easier to maintain.
 `src/statistics.py` contains only general character and word-count utilities.
 Sentence, POS, clause, and syntactic complexity functions belong to
 `src/syntax/` and reuse the shared `src/nlp/pipeline.py`.
+
+---
+
+# 2026-08-16
+
+## Clause Detection Methodology v2
+
+### Decision
+
+Created a single clause detector in `src/syntax/clauses.py`.
+
+Clause-related metrics now distinguish:
+
+- finite clauses;
+- dependent finite clauses;
+- non-finite predicative units.
+
+`total_clauses` remains as a backward-compatible alias for the number of
+finite clauses. Coordinated predicates are not automatically counted as
+separate clauses; a coordinated finite predicate needs evidence of separate
+predication, primarily its own subject.
+
+### Reason
+
+The previous `total_clauses` implementation counted `VERB` tokens. That proxy
+mixed finite clauses with infinitives and participles, while also treating
+shared-subject coordinated predicates as separate clauses.
+
+### Consequences
+
+All clause-related metrics in `src/syntax/complexity.py` use the shared clause
+detector. Non-finite predicative units no longer increase `total_clauses` or
+`clause_density`. Sentence-based `subordination_ratio` includes only sentences
+with at least one finite dependent clause. `complex_sentence_percentage` uses
+the same finite-only numerator and equals `subordination_ratio * 100`.

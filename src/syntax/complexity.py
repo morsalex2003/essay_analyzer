@@ -2,9 +2,7 @@ from math import sqrt
 
 from src.nlp.pipeline import nlp
 from src.statistics import count_words
-
-
-SUBORDINATE_DEPENDENCIES = ("advcl", "ccomp", "xcomp", "relcl")
+from src.syntax.clauses import detect_clauses
 
 
 def _calculate_mean_dependency_distance(doc) -> float:
@@ -117,15 +115,10 @@ def count_pos(text):
 
 
 def count_subordinate_clauses(text):
+    """Count finite dependent clauses in the text."""
     doc = nlp(text)
-
-    count = 0
-
-    for token in doc:
-        if token.dep_ in SUBORDINATE_DEPENDENCIES:
-            count += 1
-
-    return count
+    clause_summary = detect_clauses(doc)
+    return len(clause_summary["dependent_clause_heads"])
 
 
 def longest_sentence_length(text):
@@ -148,19 +141,15 @@ def longest_sentence_length(text):
 
 def complex_sentence_percentage(text):
     doc = nlp(text)
-
     sentences = list(doc.sents)
 
     if len(sentences) == 0:
         return 0.0
 
-    complex_sentences = 0
-
-    for sentence in sentences:
-        for token in sentence:
-            if token.dep_ in SUBORDINATE_DEPENDENCIES:
-                complex_sentences += 1
-                break
+    clause_summary = detect_clauses(doc)
+    complex_sentences = len(
+        clause_summary["sentences_with_finite_subordination"]
+    )
 
     return complex_sentences / len(sentences) * 100
 
@@ -175,7 +164,11 @@ def analyze_syntax(text: str) -> dict[str, int | float]:
             "average_sentence_length": 0.0,
             "sentence_length_std": 0.0,
             "total_clauses": 0,
+            "finite_clauses": 0,
+            "dependent_clauses": 0,
+            "non_finite_predicative_units": 0,
             "clause_density": 0.0,
+            "dependent_clause_ratio": 0.0,
             "subordination_ratio": 0.0,
             "mean_dependency_distance": 0.0,
             "mean_dependency_tree_depth": 0.0,
@@ -183,27 +176,23 @@ def analyze_syntax(text: str) -> dict[str, int | float]:
         }
 
     sentence_lengths = []
-    total_clauses = 0
-    sentences_with_subordination = 0
 
     for sentence in sentences:
         sentence_length = 0
-        has_subordination = False
 
         for token in sentence:
             if not token.is_punct and not token.is_space:
                 sentence_length += 1
 
-            if token.pos_ == "VERB":
-                total_clauses += 1
-
-            if token.dep_ in SUBORDINATE_DEPENDENCIES:
-                has_subordination = True
-
         sentence_lengths.append(sentence_length)
 
-        if has_subordination:
-            sentences_with_subordination += 1
+    clause_summary = detect_clauses(doc)
+    finite_clauses = len(clause_summary["finite_clause_heads"])
+    dependent_clauses = len(clause_summary["dependent_clause_heads"])
+    non_finite_units = len(clause_summary["non_finite_heads"])
+    sentences_with_finite_subordination = len(
+        clause_summary["sentences_with_finite_subordination"]
+    )
 
     total_sentences = len(sentences)
     average_sentence_length = sum(sentence_lengths) / total_sentences
@@ -215,8 +204,16 @@ def analyze_syntax(text: str) -> dict[str, int | float]:
 
     variance = sum(squared_differences) / total_sentences
     sentence_length_std = sqrt(variance)
-    clause_density = total_clauses / total_sentences
-    subordination_ratio = sentences_with_subordination / total_sentences
+    clause_density = finite_clauses / total_sentences
+
+    if finite_clauses == 0:
+        dependent_clause_ratio = 0.0
+    else:
+        dependent_clause_ratio = dependent_clauses / finite_clauses
+
+    subordination_ratio = (
+        sentences_with_finite_subordination / total_sentences
+    )
     dependency_distance = _calculate_mean_dependency_distance(doc)
     dependency_tree_depths = _calculate_dependency_tree_depths(sentences)
     mean_tree_depth = sum(dependency_tree_depths) / total_sentences
@@ -226,8 +223,13 @@ def analyze_syntax(text: str) -> dict[str, int | float]:
         "sentences": total_sentences,
         "average_sentence_length": average_sentence_length,
         "sentence_length_std": sentence_length_std,
-        "total_clauses": total_clauses,
+        # total_clauses is retained as an alias for finite_clauses.
+        "total_clauses": finite_clauses,
+        "finite_clauses": finite_clauses,
+        "dependent_clauses": dependent_clauses,
+        "non_finite_predicative_units": non_finite_units,
         "clause_density": clause_density,
+        "dependent_clause_ratio": dependent_clause_ratio,
         "subordination_ratio": subordination_ratio,
         "mean_dependency_distance": dependency_distance,
         "mean_dependency_tree_depth": mean_tree_depth,
