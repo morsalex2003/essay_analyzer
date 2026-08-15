@@ -8,6 +8,9 @@ from src.syntax import (
     count_sentences,
     count_subordinate_clauses,
     longest_sentence_length,
+    max_dependency_tree_depth,
+    mean_dependency_distance,
+    mean_dependency_tree_depth,
 )
 
 
@@ -21,7 +24,14 @@ def test_empty_text_returns_zero_values():
         "total_clauses": 0,
         "clause_density": 0.0,
         "subordination_ratio": 0.0,
+        "mean_dependency_distance": 0.0,
+        "mean_dependency_tree_depth": 0.0,
+        "max_dependency_tree_depth": 0,
     }
+
+    assert mean_dependency_distance("") == 0.0
+    assert mean_dependency_tree_depth("") == 0.0
+    assert max_dependency_tree_depth("") == 0
 
 
 def test_sentence_lengths_and_variation_are_calculated():
@@ -82,3 +92,48 @@ def test_migrated_metrics_preserve_subordination_behavior():
     assert count_subordinate_clauses(text) == 2
     assert longest_sentence_length(text) == 9
     assert complex_sentence_percentage(text) == 100.0
+
+
+def test_simple_sentence_dependency_metrics():
+    result = analyze_syntax("Birds fly.")
+
+    assert result["mean_dependency_distance"] == 1.0
+    assert result["mean_dependency_tree_depth"] == 1.0
+    assert result["max_dependency_tree_depth"] == 1
+
+
+def test_modifiers_increase_dependency_tree_depth():
+    text = "The bird with bright blue feathers sings."
+    result = analyze_syntax(text)
+
+    assert result["mean_dependency_distance"] == pytest.approx(13 / 6)
+    assert result["mean_dependency_tree_depth"] == 4.0
+    assert result["max_dependency_tree_depth"] == 4
+
+
+def test_subordinate_clause_dependency_metrics():
+    text = "People think that animals need protection."
+    result = analyze_syntax(text)
+
+    assert result["mean_dependency_distance"] == 1.6
+    assert result["mean_dependency_tree_depth"] == 2.0
+    assert result["max_dependency_tree_depth"] == 2
+    assert result["subordination_ratio"] == 1.0
+
+
+def test_multiple_sentence_depths_are_averaged():
+    text = "Birds fly. Cats chase mice."
+    result = analyze_syntax(text)
+
+    assert result["mean_dependency_distance"] == 1.0
+    assert result["mean_dependency_tree_depth"] == 1.0
+    assert result["max_dependency_tree_depth"] == 1
+    assert result["sentences"] == 2
+
+
+def test_punctuation_dependencies_are_excluded():
+    result = analyze_syntax("Birds fly!!!")
+
+    assert result["mean_dependency_distance"] == 1.0
+    assert result["mean_dependency_tree_depth"] == 1.0
+    assert result["max_dependency_tree_depth"] == 1

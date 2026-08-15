@@ -7,6 +7,83 @@ from src.statistics import count_words
 SUBORDINATE_DEPENDENCIES = ("advcl", "ccomp", "xcomp", "relcl")
 
 
+def _calculate_mean_dependency_distance(doc) -> float:
+    dependency_distances = []
+
+    for token in doc:
+        if token.dep_ == "ROOT" or token.is_punct or token.is_space:
+            continue
+
+        distance = abs(token.i - token.head.i)
+        dependency_distances.append(distance)
+
+    if len(dependency_distances) == 0:
+        return 0.0
+
+    return sum(dependency_distances) / len(dependency_distances)
+
+
+def mean_dependency_distance(text: str) -> float:
+    doc = nlp(text)
+    return _calculate_mean_dependency_distance(doc)
+
+
+def _token_dependency_depth(token) -> int:
+    depth = 0
+    current_token = token
+
+    while current_token.dep_ != "ROOT":
+        if current_token.head == current_token:
+            break
+
+        depth += 1
+        current_token = current_token.head
+
+    return depth
+
+
+def _calculate_dependency_tree_depths(sentences) -> list[int]:
+    sentence_depths = []
+
+    for sentence in sentences:
+        sentence_depth = 0
+
+        for token in sentence:
+            if token.is_punct or token.is_space:
+                continue
+
+            token_depth = _token_dependency_depth(token)
+
+            if token_depth > sentence_depth:
+                sentence_depth = token_depth
+
+        sentence_depths.append(sentence_depth)
+
+    return sentence_depths
+
+
+def mean_dependency_tree_depth(text: str) -> float:
+    doc = nlp(text)
+    sentences = list(doc.sents)
+    sentence_depths = _calculate_dependency_tree_depths(sentences)
+
+    if len(sentence_depths) == 0:
+        return 0.0
+
+    return sum(sentence_depths) / len(sentence_depths)
+
+
+def max_dependency_tree_depth(text: str) -> int:
+    doc = nlp(text)
+    sentences = list(doc.sents)
+    sentence_depths = _calculate_dependency_tree_depths(sentences)
+
+    if len(sentence_depths) == 0:
+        return 0
+
+    return max(sentence_depths)
+
+
 def count_sentences(text):
     doc = nlp(text)
     return len(list(doc.sents))
@@ -100,6 +177,9 @@ def analyze_syntax(text: str) -> dict[str, int | float]:
             "total_clauses": 0,
             "clause_density": 0.0,
             "subordination_ratio": 0.0,
+            "mean_dependency_distance": 0.0,
+            "mean_dependency_tree_depth": 0.0,
+            "max_dependency_tree_depth": 0,
         }
 
     sentence_lengths = []
@@ -137,6 +217,10 @@ def analyze_syntax(text: str) -> dict[str, int | float]:
     sentence_length_std = sqrt(variance)
     clause_density = total_clauses / total_sentences
     subordination_ratio = sentences_with_subordination / total_sentences
+    dependency_distance = _calculate_mean_dependency_distance(doc)
+    dependency_tree_depths = _calculate_dependency_tree_depths(sentences)
+    mean_tree_depth = sum(dependency_tree_depths) / total_sentences
+    max_tree_depth = max(dependency_tree_depths)
 
     return {
         "sentences": total_sentences,
@@ -145,4 +229,7 @@ def analyze_syntax(text: str) -> dict[str, int | float]:
         "total_clauses": total_clauses,
         "clause_density": clause_density,
         "subordination_ratio": subordination_ratio,
+        "mean_dependency_distance": dependency_distance,
+        "mean_dependency_tree_depth": mean_tree_depth,
+        "max_dependency_tree_depth": max_tree_depth,
     }

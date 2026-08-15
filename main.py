@@ -81,6 +81,18 @@ print(
     "Subordination ratio:",
     round(syntax_data["subordination_ratio"], 2)
 )
+print(
+    "Mean dependency distance:",
+    round(syntax_data["mean_dependency_distance"], 2)
+)
+print(
+    "Mean dependency tree depth:",
+    round(syntax_data["mean_dependency_tree_depth"], 2)
+)
+print(
+    "Maximum dependency tree depth:",
+    syntax_data["max_dependency_tree_depth"]
+)
 
 print("Most common words:", common_words)
 print("Repeated words:")
