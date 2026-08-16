@@ -36,6 +36,10 @@ WARNING_SIGNALS = (
     "unmarked_comma_clause_link",
     "nominal_predicate_coordination",
     "coordinator_dependency_conflict",
+    "coordination_attachment_conflict",
+    "nonfinite_head_finite_support_conflict",
+    "unrepresented_finite_predication",
+    "nonverbal_root_finite_auxiliary_conflict",
 )
 
 NON_FINITE_VERB_FORMS = ("Inf", "Ger", "Part")
@@ -48,6 +52,25 @@ CLAUSAL_DEPENDENCIES = (
 UNMARKED_LINK_DEPENDENCIES = ("advcl", "ccomp")
 AUXILIARY_DEPENDENCIES = ("aux", "auxpass", "cop")
 NOMINAL_FRAGMENT_ROOT_POS = ("NOUN", "PROPN", "ADJ", "NUM", "X")
+NONVERBAL_PREDICATE_POS = ("ADJ", "NOUN", "PROPN")
+UNREPRESENTED_CLAUSAL_DEPENDENCIES = (
+    "advcl",
+    "ccomp",
+    "relcl",
+    "csubj",
+    "csubjpass",
+    "acl",
+)
+PREDICATE_ARGUMENT_DEPENDENCIES = (
+    "dobj",
+    "dative",
+    "attr",
+    "oprd",
+    "xcomp",
+    "ccomp",
+    "prep",
+)
+PREDICATIVE_COMPLEMENT_DEPENDENCIES = ("acomp", "attr", "oprd")
 
 
 def _content_tokens(sentence: Doc | Span) -> list[Token]:
@@ -102,6 +125,18 @@ def _all_predicative_heads(
     return heads
 
 
+def _predicative_head_indexes(
+    sentence: Doc | Span,
+    clause_summary: dict[str, object],
+) -> set[int]:
+    indexes = set()
+
+    for token in _all_predicative_heads(sentence, clause_summary):
+        indexes.add(token.i)
+
+    return indexes
+
+
 def _has_own_subject(token: Token) -> bool:
     for child in token.children:
         if child.dep_ in SUBJECT_DEPENDENCIES:
@@ -110,15 +145,30 @@ def _has_own_subject(token: Token) -> bool:
     return False
 
 
+def _is_finite_auxiliary(token: Token) -> bool:
+    if token.dep_ not in AUXILIARY_DEPENDENCIES:
+        return False
+
+    if token.tag_ == "MD":
+        return True
+
+    return "Fin" in token.morph.get("VerbForm")
+
+
 def _has_finite_auxiliary_or_copula(token: Token) -> bool:
     for child in token.children:
-        if child.dep_ not in AUXILIARY_DEPENDENCIES:
-            continue
-
-        if child.tag_ == "MD":
+        if _is_finite_auxiliary(child):
             return True
 
-        if "Fin" in child.morph.get("VerbForm"):
+    return False
+
+
+def _finite_auxiliary_child_has_subject(token: Token) -> bool:
+    for child in token.children:
+        if not _is_finite_auxiliary(child):
+            continue
+
+        if _has_own_subject(child):
             return True
 
     return False
@@ -539,6 +589,251 @@ def _coordination_anchor(token: Token) -> Token:
     return anchor
 
 
+def _has_predicate_argument(token: Token) -> bool:
+    for child in token.children:
+        if child.dep_ in PREDICATE_ARGUMENT_DEPENDENCIES:
+            return True
+
+    return False
+
+
+def _has_inconsistent_nonfinite_parallelism(
+    sentence: Doc | Span,
+    clause_summary: dict[str, object],
+) -> bool:
+    represented_indexes = _predicative_head_indexes(
+        sentence,
+        clause_summary,
+    )
+    non_finite_indexes = set()
+
+    for token in _heads_in_sentence(
+        sentence,
+        clause_summary,
+        "non_finite_heads",
+    ):
+        non_finite_indexes.add(token.i)
+
+    for token in sentence:
+        if token.dep_ != "conj":
+            continue
+
+        if token.pos_ != "VERB" and token.pos_ != "AUX":
+            continue
+
+        anchor = _coordination_anchor(token)
+
+        if anchor.i not in non_finite_indexes:
+            continue
+
+        for earlier_token in sentence:
+            if earlier_token.i >= anchor.i:
+                continue
+
+            if earlier_token.i in represented_indexes:
+                continue
+
+            if earlier_token.pos_ not in ("VERB", "AUX"):
+                continue
+
+            if earlier_token.dep_ not in ("compound", "amod"):
+                continue
+
+            if not _has_non_finite_form(earlier_token):
+                continue
+
+            if not _is_descendant_of(earlier_token, anchor.head):
+                continue
+
+            if _has_comma_between(earlier_token, anchor):
+                return True
+
+    return False
+
+
+def _has_verbal_conj_nominal_appositive_conflict(
+    sentence: Doc | Span,
+    clause_summary: dict[str, object],
+) -> bool:
+    represented_indexes = _predicative_head_indexes(
+        sentence,
+        clause_summary,
+    )
+
+    for token in sentence:
+        if token.dep_ != "conj":
+            continue
+
+        if token.pos_ != "VERB" and token.pos_ != "AUX":
+            continue
+
+        if token.i not in represented_indexes:
+            continue
+
+        anchor = _coordination_anchor(token)
+
+        if anchor.pos_ not in ("NOUN", "PROPN"):
+            continue
+
+        if anchor.dep_ != "appos":
+            continue
+
+        if anchor.i in represented_indexes:
+            continue
+
+        if _has_predicate_argument(token):
+            return True
+
+    return False
+
+
+def _has_collapsed_clausal_subject_coordination(
+    sentence: Doc | Span,
+    clause_summary: dict[str, object],
+) -> bool:
+    represented_indexes = _predicative_head_indexes(
+        sentence,
+        clause_summary,
+    )
+
+    for token in sentence:
+        if token.dep_ != "conj" or token.pos_ != "AUX":
+            continue
+
+        if token.i in represented_indexes:
+            continue
+
+        if "Fin" not in token.morph.get("VerbForm"):
+            continue
+
+        has_predicative_complement = False
+
+        for child in token.children:
+            if child.dep_ in PREDICATIVE_COMPLEMENT_DEPENDENCIES:
+                has_predicative_complement = True
+                break
+
+        if not has_predicative_complement:
+            continue
+
+        anchor = _coordination_anchor(token)
+
+        for sibling in sentence:
+            if sibling.i >= token.i or sibling.dep_ != "conj":
+                continue
+
+            if sibling.pos_ != "VERB":
+                continue
+
+            if _coordination_anchor(sibling) != anchor:
+                continue
+
+            if _has_non_finite_form(sibling):
+                return True
+
+    return False
+
+
+def _has_coordination_attachment_conflict(
+    sentence: Doc | Span,
+    clause_summary: dict[str, object],
+) -> bool:
+    if _has_inconsistent_nonfinite_parallelism(
+        sentence,
+        clause_summary,
+    ):
+        return True
+
+    if _has_verbal_conj_nominal_appositive_conflict(
+        sentence,
+        clause_summary,
+    ):
+        return True
+
+    return _has_collapsed_clausal_subject_coordination(
+        sentence,
+        clause_summary,
+    )
+
+
+def _has_nonfinite_head_finite_support_conflict(
+    sentence: Doc | Span,
+    clause_summary: dict[str, object],
+) -> bool:
+    non_finite_indexes = set()
+
+    for token in _heads_in_sentence(
+        sentence,
+        clause_summary,
+        "non_finite_heads",
+    ):
+        non_finite_indexes.add(token.i)
+
+    for token in sentence:
+        if token.i not in non_finite_indexes:
+            continue
+
+        if not _has_infinitive_marker(token):
+            continue
+
+        if _has_finite_auxiliary_or_copula(token):
+            return True
+
+    return False
+
+
+def _has_unrepresented_finite_predication(
+    sentence: Doc | Span,
+    clause_summary: dict[str, object],
+) -> bool:
+    represented_indexes = _predicative_head_indexes(
+        sentence,
+        clause_summary,
+    )
+
+    for token in sentence:
+        if token.i in represented_indexes:
+            continue
+
+        if token.pos_ in ("VERB", "AUX") and token.dep_ == "pcomp":
+            has_finite_evidence = (
+                "Fin" in token.morph.get("VerbForm")
+                or _has_finite_auxiliary_or_copula(token)
+            )
+
+            if _has_own_subject(token) and has_finite_evidence:
+                return True
+
+        if token.pos_ not in NONVERBAL_PREDICATE_POS:
+            continue
+
+        if token.dep_ not in UNREPRESENTED_CLAUSAL_DEPENDENCIES:
+            continue
+
+        if _finite_auxiliary_child_has_subject(token):
+            return True
+
+    return False
+
+
+def _has_nonverbal_root_finite_auxiliary_conflict(
+    sentence: Doc | Span,
+) -> bool:
+    root = _sentence_root(sentence)
+
+    if root is None or root.pos_ in ("VERB", "AUX"):
+        return False
+
+    for child in root.children:
+        if child.dep_ not in ("aux", "auxpass"):
+            continue
+
+        if _is_finite_auxiliary(child):
+            return True
+
+    return False
+
+
 def _has_cross_comma_nonfinite_coordination(
     sentence: Doc | Span,
     finite_heads: list[Token],
@@ -742,6 +1037,27 @@ def detect_reliability_flags(
 
     if _has_coordinator_dependency_conflict(sentence, finite_heads):
         flags.append("coordinator_dependency_conflict")
+
+    if _has_coordination_attachment_conflict(
+        sentence,
+        clause_summary,
+    ):
+        flags.append("coordination_attachment_conflict")
+
+    if _has_nonfinite_head_finite_support_conflict(
+        sentence,
+        clause_summary,
+    ):
+        flags.append("nonfinite_head_finite_support_conflict")
+
+    if _has_unrepresented_finite_predication(
+        sentence,
+        clause_summary,
+    ):
+        flags.append("unrepresented_finite_predication")
+
+    if _has_nonverbal_root_finite_auxiliary_conflict(sentence):
+        flags.append("nonverbal_root_finite_auxiliary_conflict")
 
     return flags
 

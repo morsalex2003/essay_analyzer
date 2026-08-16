@@ -459,6 +459,125 @@ def test_v11_development_regressions(
     }
 
 
+V12_DEVELOPMENT_CASES = (
+    (
+        (
+            "For instance, when I was studying online, during the "
+            "pandemic, I had a huge amount of distractions like playing "
+            "games, sleeping or texting with friends on lessons."
+        ),
+        "medium",
+        ["coordination_attachment_conflict"],
+    ),
+    (
+        (
+            "First off all, personal guide, selected from students of new "
+            "class, should show territory, all pupils and explain rules."
+        ),
+        "medium",
+        ["coordination_attachment_conflict"],
+    ),
+    (
+        (
+            "For instance, in few regions of our planet we cannot to grow "
+            "plants anymore, so we need to find new sorts that can live "
+            "there."
+        ),
+        "medium",
+        ["nonfinite_head_finite_support_conflict"],
+    ),
+    (
+        (
+            "They have good marks because they are motivated and want "
+            "learning."
+        ),
+        "high",
+        [],
+    ),
+    (
+        (
+            "By contrast, bad students, on a regular base, do not want to "
+            "study, so for what they need access to the higher education."
+        ),
+        "medium",
+        ["unrepresented_finite_predication"],
+    ),
+    (
+        (
+            "For instance, when all participants of learning process are "
+            "motivated and concur with each other, they often learn faster "
+            "and more productive."
+        ),
+        "medium",
+        ["unrepresented_finite_predication"],
+    ),
+    (
+        (
+            "For instance, employer will hier worker that will be more "
+            "educated."
+        ),
+        "medium",
+        ["nonverbal_root_finite_auxiliary_conflict"],
+    ),
+    (
+        (
+            "For instance, in some days lessons end at the evening and "
+            "coming home in the dark is very dangerous."
+        ),
+        "medium",
+        ["coordination_attachment_conflict"],
+    ),
+)
+
+
+@pytest.mark.parametrize(
+    "text, expected_reliability, expected_flags",
+    V12_DEVELOPMENT_CASES,
+)
+def test_v12_development_regressions(
+    text,
+    expected_reliability,
+    expected_flags,
+):
+    result = _assess_sentence(text)
+
+    assert result == {
+        "reliability": expected_reliability,
+        "flags": expected_flags,
+    }
+
+
+@pytest.mark.parametrize(
+    "text",
+    (
+        "They are motivated and want to learn.",
+        (
+            "When students are motivated and work together, they learn "
+            "faster."
+        ),
+        "The course covers reading, writing, and speaking.",
+        (
+            "She enjoys reading books, writing essays, and discussing "
+            "ideas."
+        ),
+        "He left smiling, waving, and laughing.",
+        "The guide should show the room and explain the rules.",
+        "Lessons end and students are tired.",
+        "She sings and is happy.",
+        "I want to grow.",
+        "I can grow.",
+        "We have to work.",
+    ),
+)
+def test_v12_negative_controls_remain_high(text):
+    result = _assess_sentence(text)
+
+    assert result == {
+        "reliability": "high",
+        "flags": [],
+    }
+
+
 @pytest.mark.parametrize(
     "text, expected_reliability",
     (

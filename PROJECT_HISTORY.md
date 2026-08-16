@@ -212,6 +212,17 @@ unmarked comma-link warning now requires leftward hierarchy evidence.
 The seven Academic Discussion responses used while developing v1.1 are
 development regression data, not an untouched holdout corpus.
 
+Syntax Reliability v1.2 adds conservative cross-consistency warnings for
+coordination topology, non-root finite/non-finite evidence conflicts,
+unrepresented finite predication, and a non-verbal ROOT with finite auxiliary
+support. No new strong signals were added, and sentence and essay thresholds
+remain unchanged. Mixed ADJ/VERB predicate coordination such as H5.S4 remains
+a documented limitation because a broader rule also flags valid structures.
+
+The nine responses previously used as the untouched v1.1 holdout are now v1.2
+development evidence. A new untouched holdout corpus is required before v1.2
+generalization can be evaluated.
+
 Reliability categories are engineering heuristics, not probabilities,
 proficiency scores, or grammar judgements. The provisional signals and
 thresholds require validation on a new independent learner-English corpus
