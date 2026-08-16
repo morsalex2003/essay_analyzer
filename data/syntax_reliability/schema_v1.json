@@ -1,0 +1,156 @@
+{
+  "schema_version": "1.0",
+  "description": "Canonical provisional model-assisted annotation ledger for sentence-level Syntax Reliability.",
+  "binary_task": {
+    "question": "Can parser-derived syntax and clause metrics be used for this sentence?",
+    "USABLE": [
+      "RELIABLE",
+      "MOSTLY_RELIABLE"
+    ],
+    "UNRELIABLE": [
+      "UNRELIABLE"
+    ],
+    "excluded_as_abstention": [
+      "NOT_ANALYZABLE"
+    ]
+  },
+  "enums": {
+    "manual_label": [
+      "RELIABLE",
+      "MOSTLY_RELIABLE",
+      "UNRELIABLE",
+      "NOT_ANALYZABLE"
+    ],
+    "abstention_status": [
+      "none",
+      "source_fragment",
+      "parser_abstention",
+      "other"
+    ],
+    "manual_failure_type": [
+      "finite_inventory",
+      "dependent_inventory",
+      "matrix_hierarchy",
+      "nonfinite_inventory",
+      "major_dependency_structure",
+      "sentence_segmentation",
+      "source_fragment",
+      "parser_abstention",
+      "other"
+    ],
+    "adjudication_status": [
+      "single",
+      "agreed",
+      "adjudicated"
+    ],
+    "annotation_origin": [
+      "model_assisted_manual_review"
+    ],
+    "data_status": [
+      "development",
+      "reserve",
+      "sealed_test"
+    ]
+  },
+  "essay_record": {
+    "required_fields": [
+      "schema_version",
+      "essay_id",
+      "student_id",
+      "task_id",
+      "prompt_id",
+      "response_family_id",
+      "source_stage",
+      "data_status",
+      "original_text",
+      "original_text_sha256",
+      "repository_commit",
+      "spacy_version",
+      "spacy_model_name",
+      "spacy_model_version",
+      "clause_detector_version",
+      "reliability_version"
+    ],
+    "nullable_fields": [
+      "task_id",
+      "prompt_id",
+      "response_family_id"
+    ],
+    "field_meanings": {
+      "essay_id": "Stable pseudonymous response identifier.",
+      "student_id": "Pseudonymous learner identifier; never a real name.",
+      "source_stage": "Corpus or validation stage from which the response originated.",
+      "data_status": "Current methodological role; Corpus D is development after its holdout result was inspected.",
+      "original_text": "Exact uncorrected response text used to reproduce parsing.",
+      "original_text_sha256": "SHA-256 of the UTF-8 original_text value.",
+      "repository_commit": "Frozen repository revision used for the validation parse.",
+      "spacy_version": "Frozen spaCy library version.",
+      "spacy_model_name": "Frozen spaCy pipeline package name.",
+      "spacy_model_version": "Frozen spaCy model package version.",
+      "clause_detector_version": "Methodological version of clause detection.",
+      "reliability_version": "Frozen heuristic baseline version; not the source of reference annotations."
+    }
+  },
+  "annotation_record": {
+    "required_fields": [
+      "schema_version",
+      "sentence_id",
+      "essay_id",
+      "student_id",
+      "source_stage",
+      "sentence_index",
+      "original_text",
+      "original_text_sha256",
+      "manual_label",
+      "usable_binary_label",
+      "abstention_status",
+      "manual_failure_types",
+      "annotation_notes",
+      "annotation_origin",
+      "annotator_id",
+      "annotation_guideline_version",
+      "adjudication_status",
+      "repository_commit",
+      "spacy_version",
+      "spacy_model_name",
+      "spacy_model_version",
+      "clause_detector_version",
+      "reliability_version"
+    ],
+    "nullable_fields": [
+      "usable_binary_label",
+      "annotation_notes"
+    ],
+    "optional_fields": [
+      "adjudicator_id",
+      "adjudication_date",
+      "pre_adjudication_label",
+      "adjudication_notes"
+    ],
+    "field_meanings": {
+      "sentence_id": "Stable identifier within an essay and frozen sentence segmentation.",
+      "sentence_index": "One-based sentence position produced by the frozen spaCy pipeline.",
+      "original_text": "Exact uncorrected sentence text from frozen segmentation.",
+      "manual_label": "Historical field name for the four-class provisional model-assisted reference annotation; never derived from heuristic HIGH, MEDIUM, or LOW.",
+      "usable_binary_label": "Provisional ML target: true for RELIABLE/MOSTLY_RELIABLE, false for UNRELIABLE, null for NOT_ANALYZABLE.",
+      "abstention_status": "Reason an item is excluded from the binary task; none for analyzable labels.",
+      "manual_failure_types": "Controlled, possibly multi-valued reason codes used only as annotation metadata.",
+      "annotation_notes": "Explanation produced during model-assisted review; not an ML feature.",
+      "annotation_origin": "Transparent provenance category for the annotation process.",
+      "annotator_id": "Transparent identifier for the model-assisted review process, not a human identity.",
+      "adjudication_status": "Whether the record is single-reviewed, agreed, or human-adjudicated.",
+      "adjudicator_id": "Required for adjudicated records; transparent identifier for the human dataset owner.",
+      "adjudication_date": "Required ISO date for adjudicated records.",
+      "pre_adjudication_label": "Optional valid label preserving the model-assisted label before human adjudication.",
+      "adjudication_notes": "Optional explanation of a human adjudication decision."
+    }
+  },
+  "provenance": {
+    "repository_commit": "d50bdc81bad5a9e6fc2f19b9a5bd48a790579fc9",
+    "spacy_version": "3.8.13",
+    "spacy_model_name": "en_core_web_sm",
+    "spacy_model_version": "3.8.0",
+    "clause_detector_version": "2.1",
+    "reliability_version": "1.2"
+  }
+}
