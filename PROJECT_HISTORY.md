@@ -182,3 +182,38 @@ detector. Non-finite predicative units no longer increase `total_clauses` or
 `clause_density`. Sentence-based `subordination_ratio` includes only sentences
 with at least one finite dependent clause. `complex_sentence_percentage` uses
 the same finite-only numerator and equals `subordination_ratio * 100`.
+
+---
+
+# 2026-08-16
+
+## Syntax Reliability Layer
+
+### Decision
+
+Created an experimental syntax reliability layer in
+`src/syntax/reliability.py`.
+
+### Purpose
+
+Flag potentially unreliable syntax interpretation without correcting grammar
+or dependency parses. The layer uses an existing spaCy parse and the existing
+clause detector results; it does not create another NLP pipeline or change
+clause detection.
+
+### Consequences
+
+Syntax Reliability v1.1 replaces length-based fragment handling with
+structural analyzability checks. It adds conservative checks for conflicts
+between a non-finite root and finite dependency evidence, and for relative
+roots whose dependency hierarchy suggests a finite matrix clause. The
+unmarked comma-link warning now requires leftward hierarchy evidence.
+
+The seven Academic Discussion responses used while developing v1.1 are
+development regression data, not an untouched holdout corpus.
+
+Reliability categories are engineering heuristics, not probabilities,
+proficiency scores, or grammar judgements. The provisional signals and
+thresholds require validation on a new independent learner-English corpus
+before the layer can be considered stable or used by scoring and feedback
+systems.
