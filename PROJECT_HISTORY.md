@@ -728,3 +728,26 @@ default metric listing is otherwise unchanged, and with `--research` it is
 identical to the previous demo output. Missing, empty, and non-UTF-8 files fail
 with a short message. `--compare` cannot be combined with `--report`.
 
+## CELL Reliability Pilot Annotation Tool v1
+
+### Decision
+
+The 420 prepared CELL pilot sentences could only be labelled by editing long
+JSONL records by hand. Added `src/cell_annotation.py` and
+`scripts/annotate_cell_reliability_pilot.py`, a terminal session that shows
+each sentence with its neighbours, the frozen spaCy parse, and detected clause
+heads, and records R/MR/U/NA labels, failure types, abstention reasons, and
+notes. Allowed values are read from `schema_v1.json`, and record rules match
+the canonical dataset validator.
+
+### Boundaries
+
+Heuristic verdicts and ML predictions are not shown to the annotator. Labels go
+to a separate ignored `annotations_v1.jsonl` written atomically after every
+sentence; the frozen template stays unchanged, and frozen fields cannot drift
+because the ledger is checked against the template on every load. The tool
+refuses to run with a spaCy version or model that differs from the pilot
+provenance. `annotation_origin` keeps the template value
+`model_assisted_manual_review`; the schema has no separate value for direct
+human annotation yet. The holdout remains unopened.
+

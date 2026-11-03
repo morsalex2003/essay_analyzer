@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import sys
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -12,6 +13,10 @@ CELL_DIRECTORY = (
     PROJECT_ROOT / "data/syntax_reliability/external/cell"
 )
 LOCAL_DIRECTORY = CELL_DIRECTORY / "local/pilot_v1"
+
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from src.cell_annotation import merge_progress  # noqa: E402
 
 
 def load_jsonl(path: Path) -> list[dict[str, object]]:
@@ -29,6 +34,11 @@ def main() -> None:
     annotations = load_jsonl(
         LOCAL_DIRECTORY / "annotations_template.jsonl"
     )
+    progress_path = LOCAL_DIRECTORY / "annotations_v1.jsonl"
+    if progress_path.exists():
+        # The labelled ledger replaces the template for label checks, after
+        # confirming that it changes nothing but annotation fields.
+        annotations = merge_progress(annotations, load_jsonl(progress_path))
 
     development_students = set(split["students"]["development"])
     holdout_students = set(split["students"]["untouched_holdout"])
@@ -64,6 +74,11 @@ def main() -> None:
             assert annotation["usable_binary_label"] == (
                 schema["binary_mapping"][manual_label]
             )
+            if manual_label == "NOT_ANALYZABLE":
+                assert annotation["abstention_status"] not in (None, "none")
+            else:
+                assert annotation["abstention_status"] == "none"
+            assert annotation["annotator_id"]
         assert hashlib.sha256(original_text.encode()).hexdigest() == (
             annotation["original_text_sha256"]
         )
@@ -75,10 +90,14 @@ def main() -> None:
         "UNRELIABLE",
         "NOT_ANALYZABLE",
     ]
+    labelled_count = sum(
+        annotation["manual_label"] is not None for annotation in annotations
+    )
     print(
         "CELL pilot valid: "
         f"{len(student_ids)} students, {len(essays)} essays, "
-        f"{len(annotations)} sentences; holdout unopened; privacy passed"
+        f"{len(annotations)} sentences ({labelled_count} labelled); "
+        "holdout unopened; privacy passed"
     )
 
 

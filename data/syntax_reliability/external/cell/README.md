@@ -53,3 +53,25 @@ IDs, labels, heuristic verdicts, or model predictions.
 
 Validate the private batch, frozen split membership, hashes, and public-report
 privacy with `python scripts/validate_cell_reliability_pilot.py`.
+
+Label the pilot sentences in the terminal:
+
+```text
+python scripts/annotate_cell_reliability_pilot.py --annotator-id owner_review_v1
+```
+
+Each screen shows the exact sentence with its neighbours, the frozen spaCy
+token table (POS, dependency, head), and the detected finite, dependent, and
+non-finite clause heads. Syntax Reliability heuristic verdicts and ML
+predictions are not shown. Keys: `r` RELIABLE, `m` MOSTLY_RELIABLE,
+`u` UNRELIABLE (then failure types), `n` NOT_ANALYZABLE (then the abstention
+reason), `s` skip, `b` back, `q` quit. Allowed values come from
+`data/syntax_reliability/schema_v1.json`.
+
+Every confirmed label is saved immediately to the ignored
+`local/pilot_v1/annotations_v1.jsonl`; `annotations_template.jsonl` is never
+changed. Running the script again continues at the first unlabelled sentence,
+`--start-at N` reviews from sentence N, and `--summary` prints label counts.
+The script refuses to run if the installed spaCy version or model differs from
+the frozen pilot provenance. The validator checks the labelled ledger as well
+when it exists.
