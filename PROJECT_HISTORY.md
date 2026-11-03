@@ -228,3 +228,463 @@ proficiency scores, or grammar judgements. The provisional signals and
 thresholds require validation on a new independent learner-English corpus
 before the layer can be considered stable or used by scoring and feedback
 systems.
+
+---
+
+# 2026-08-17
+
+## Structural Reliability Features v1
+
+### Decision
+
+Created a deterministic structural feature schema for a future binary syntax
+reliability classifier. The extractor consumes an existing spaCy sentence
+parse and Clause Detection v2.1 summary without running another NLP pipeline.
+
+Schema v1 provides two feature sets:
+
+- structural-only parse, morphology, clause, dependency, and tree features;
+- the same structural features plus individual frozen Syntax Reliability
+  v1.2 evidence signals.
+
+### Boundaries
+
+The schema contains no lexical identity, lexical metrics, labels, student or
+essay identifiers, source-stage metadata, final heuristic verdict, or
+abstention decision. Corpus A remains excluded from the canonical dry run and
+is development-only.
+
+### Consequences
+
+The first development baseline now compares structural features against
+structural-plus-signal features, using essay IDs only for grouped data
+splitting and never as predictive inputs.
+
+## Structural Reliability ML Baseline v1
+
+### Decision
+
+Created a reproducible binary development baseline for distinguishing
+`UNRELIABLE` syntax parses from `USABLE` parses. The experiment uses only the
+canonical B+C+D data: 221 analyzable sentence observations from 28 essays,
+with 178 `USABLE` and 43 `UNRELIABLE` targets. Corpus A and 11
+`NOT_ANALYZABLE` records are excluded.
+
+Both models use an essay-grouped, five-fold `StratifiedGroupKFold` evaluation
+and a fold-local `StandardScaler` followed by balanced Logistic Regression.
+Model A uses the 44 structural features. Model B uses those features plus the
+19 frozen Syntax Reliability v1.2 evidence signals. The classification
+threshold remains 0.5; no feature selection, threshold tuning, or
+hyperparameter search was performed.
+
+### Development OOF results
+
+- Model A: precision 0.509, recall 0.674, F1 0.580, F2 0.633, balanced
+  accuracy 0.759, average precision 0.605, TN 150, FP 28, FN 14, TP 29.
+- Model B: precision 0.667, recall 0.744, F1 0.703, F2 0.727, balanced
+  accuracy 0.827, average precision 0.809, TN 162, FP 16, FN 11, TP 32.
+- Frozen v1.2 warning baseline: precision 0.941, recall 0.744, F1 0.831,
+  F2 0.777, balanced accuracy 0.867, TN 176, FP 2, FN 11, TP 32.
+
+### Boundaries
+
+These are development estimates, not independent validation or final
+generalization results. The dataset contains only 221 analyzable sentences,
+28 essays, and two currently represented pseudonymized students, and it
+participated in methodology development. The baseline does not claim TOEFL or
+IELTS performance. Descriptive full-data coefficients are not causal and can
+be unstable when features are correlated. More untouched data is required
+before model or threshold selection.
+
+## Reliability ML Baseline v1 Error Analysis
+
+The Model B and frozen v1.2 true-positive sets overlap on 31 observations;
+each system uniquely catches one additional `UNRELIABLE` observation, and
+both miss 10. Matrix-hierarchy failures are the most frequent family among
+the shared misses.
+
+Model B produces 14 false positives not produced by frozen v1.2, while both
+systems share two false positives. Fourteen of Model B's 16 false positives
+have no active heuristic signal, so their main mechanism is structural-feature
+pressure rather than direct warning-signal activation. Many false positives
+and false negatives are far from the unchanged 0.5 threshold. The next
+methodological step is more untouched, structurally targeted data rather than
+threshold tuning, a stronger model, or an immediate feature-schema revision.
+
+## Syntax Reliability Data Expansion v1
+
+Future collection is divided into development expansion and an untouched
+student-level holdout. Complete learner responses are assigned by student to
+one role before model inspection; essays, sentences, and revisions from that
+student cannot cross the boundary. Collection prioritizes additional authors,
+parser-failure coverage, and structurally similar usable controls rather than
+performance-driven sampling of suspicious sentences.
+
+Corpus A remains auxiliary development evidence and cannot serve as final
+evaluation data. Reliability ML v2 development may begin only after the
+development expansion is frozen. The untouched holdout may be evaluated only
+after its source and annotations are sealed and the ML v2 model, features,
+threshold, and evaluation procedure are frozen.
+
+## CELL Data Integration v1
+
+Added a deterministic intake boundary for the CELL corpus without changing
+Reliability ML features, model code, or thresholds. The canonical inventory
+contains 2,857 essays from 491 student IDs; the duplicate `All/` mirror is
+excluded, and source records use collision-safe `archive_path + sha256`
+identity rather than basename.
+
+The frozen split uses seed `20260824` and assigns whole students to either
+development or untouched holdout. Assignment uses only student identity,
+period/course coverage, and essays-per-student bins. Learner text is extracted
+by structural tag name as `Intro + Body + Conclusion`, then HTML-unescaped
+without language correction;
+`Title`, `Ref`, and `App` are excluded from NLP input.
+
+Raw learner files and the hash-bearing intake manifest remain ignored and
+untracked. Exact, normalized, and near-duplicate/revision metadata is retained
+without automatic source-row deletion.
+
+---
+
+# 2026-08-27
+
+## CELL Reliability Pilot v1
+
+Prepared a deterministic annotation pilot using only CELL development
+students. Student selection uses structural filename metadata; essay and
+sentence selection uses parser-derived structural coverage without
+Reliability labels, reviewed errors, heuristic verdicts, ML predictions,
+quality, length, or duplicate flags. The batch intentionally includes simple
+negative controls alongside coordination, finite subordination, relative
+clauses, ccomp/xcomp, non-finite predicative units, modal/auxiliary support,
+and punctuation-linked structures.
+
+Complete selected essays and the R/MR/U/NA annotation template remain in the
+ignored local CELL directory. The tracked pilot report contains aggregate
+composition and frozen parser provenance only. The untouched holdout remains
+unopened, and Reliability ML v1 was neither retrained nor tuned.
+
+The frozen batch contains 35 development students, 35 complete essays, and
+420 annotation sentences. It covers all eight periods and 23 courses. Its
+overlapping structural counts are: coordination 136, finite subordination
+110, relative clauses 60, ccomp/xcomp 93, non-finite predicative units 137,
+modal/auxiliary support 187, punctuation-linked structures 185, and 130 simple
+controls.
+
+---
+
+# 2026-10-29
+
+## Writing Analysis Application Boundary v1
+
+### Decision
+
+Created a versioned `analyze_writing()` application interface that combines
+the existing lexical, syntax, and syntax-reliability results in one
+JSON-compatible structure. The interface accepts prepared vocabulary lookups
+instead of loading datasets for every request and reuses one spaCy `Doc`
+through the analysis pipeline.
+
+### Reason
+
+The existing modules were reusable, but `main.py` was the only place where
+their results were assembled. A stable application boundary is required
+before adding a web resource, Telegram client, revision workflow, or model
+orchestration.
+
+### Consequences
+
+TTR and MATTR retain their existing algorithms, but their different token
+policies are now explicit in the result schema. Repetition uses observed
+surface forms, while frequency-dependent normalization remains limited to
+metrics that require word-frequency lookup. Sentence-level reliability records
+include text offsets for future evidence-based feedback. Lexical evidence links
+repeated surface forms and unknown frequency-list words to their exact text
+offsets and sentence numbers. EFLLex stays outside the default result and is
+available only through an explicit research-metrics option because its license
+is noncommercial. `main.py` now consumes the shared application result instead
+of independently rerunning all analysis modules.
+
+## Evidence-Based Reporting Boundary v1
+
+### Decision
+
+Added separate deterministic student and teacher report builders on top of the
+versioned analysis result. The student report limits itself to concise,
+evidence-backed review prompts and keeps parser reliability warnings separate
+from writing feedback. The teacher report preserves the complete diagnostic
+metrics, evidence offsets, parser flags, and token-policy notes.
+
+### Boundaries
+
+The reports do not assign TOEFL, IELTS, proficiency, or writing-quality scores.
+An unknown frequency-list word is not labelled as a spelling error, repetition
+is not automatically labelled as poor writing, and syntax reliability remains
+a warning about measurement quality rather than a grammar judgement. No model
+or external service is used to generate the reports.
+
+## Revision Comparison Boundary v1
+
+### Decision
+
+Added a deterministic comparison for two versioned writing-analysis results.
+It reports metric deltas and tracks which unknown frequency-list words and
+repeated surface forms are no longer present, remain present, or are newly
+present, preserving evidence offsets for both revisions.
+
+### Boundaries
+
+Metric direction is intentionally not labelled as improvement or decline.
+Syntax reliability changes describe parser confidence rather than writing
+quality, and optional CEFR percentage changes remain descriptive. Revision
+comparison does not use an external model or modify either analysis result.
+
+## Writing Task Context Boundary v1
+
+### Decision
+
+Added a versioned, validated task-context structure for prompts, response modes,
+instructions, source materials, and explicit requirements. Task context remains
+separate from learner response text and is copied into the application result
+without entering lexical or syntax measurements. Revision comparison requires
+both analyses to refer to the same canonical task context.
+
+### Boundaries
+
+The current system stores task context but does not infer prompt fulfillment,
+source use, argument quality, or an exam score. Student and teacher reports
+explicitly mark task alignment as `not_evaluated`. The response modes are
+generic writing modes rather than claims about a particular current exam
+format.
+
+## Evidence-Grounded Task Alignment Contract v1
+
+### Decision
+
+Task requirements now have stable IDs, and a separate alignment-assessment
+contract records requirement-level statuses, exact response offsets, and
+explicit assessor provenance. Assessments are bound to hashes of the canonical
+task context and exact learner response. Reports can display the supplied
+assessment but do not calculate one themselves.
+
+### Boundaries
+
+The application does not infer semantic task fulfillment, aggregate statuses
+into a score, or treat model output as hidden ground truth. `met` and
+`partially_met` require response evidence; `not_met` requires an explanatory
+note; `not_assessed` is an explicit abstention. Human, model, and model-assisted
+assessors remain visibly distinguishable.
+
+## Alignment Review Orchestration v1
+
+### Decision
+
+Added a provider-neutral coordination layer for comparing two or more valid
+task-alignment assessments. It preserves each assessor's status, evidence, and
+note for every requirement and records either provisional agreement or explicit
+disagreement. Teacher reports may include the unresolved review.
+
+### Boundaries
+
+The orchestration layer does not call external models, vote, weight assessors,
+or convert model agreement into ground truth. Any disagreement remains
+unresolved until a separately identified human adjudicator supplies a complete
+evidence-grounded assessment. Adjudication creates a new result and does not
+mutate the original review.
+
+## Alignment Provider Interface v1
+
+### Decision
+
+Added a provider-neutral synchronous adapter for future local or remote
+alignment models. It sends only canonical task context and learner response,
+requires structured completion or explicit abstention, validates all returned
+evidence through the alignment contract, and records provider/model provenance,
+hashes, elapsed time, and a bounded diagnostic reason code.
+
+### Boundaries
+
+No concrete external API, credentials, retry policy, or paid service is
+configured. Local and remote providers require distinct explicit data-handling
+policies; remote processing must be authorized by the caller before learner
+text is sent. The synchronous adapter passes a timeout to the provider and
+fails closed on `TimeoutError` or a late return, but the concrete provider is
+responsible for interrupting its own blocking request. Invalid model output
+never becomes an assessment. Provider run records do not retain a standalone
+full-response field or raw exception messages, but completed assessments retain
+exact learner evidence quotations and remain private. Only completed compatible
+runs enter orchestration; abstentions and failures remain visible in provenance
+but cannot vote.
+
+## Task Alignment Evaluation Infrastructure v1
+
+### Decision
+
+Added a public-safe schema and validator for a future requirement-level task
+alignment evaluation dataset. Canonical task, learner-response, and reference
+assessment JSONL files are local-only. The validator checks exact text hashes,
+canonical task and alignment contracts, one human reference per response,
+pseudonymous participant declarations, consent/use status, and task/response
+identity.
+
+### Boundaries
+
+No learner records, prompts, source material, examples derived from real work,
+or evaluation split assignments were added. Development and sealed-evaluation
+roles are defined, and participants and response families cannot cross them.
+Provider predictions and orchestration agreement are not reference labels.
+
+## Task Alignment Annotation Pilot Protocol v1
+
+### Decision
+
+Added a public annotation protocol and a local-only worklist generator for the
+development portion of the task-alignment dataset. At least two pseudonymous
+reviewers receive independent copies containing only canonical task context,
+exact learner response text, and blank requirement-level annotation fields.
+
+### Boundaries
+
+Worklists exclude provider predictions, NLP metrics, other reviewers' labels,
+and suggested decisions. Every requirement-level disagreement requires human
+adjudication; voting is not used. The pilot workflow rejects sealed-evaluation
+records, stores private worklists only under an ignored local directory, and
+does not add learner data to the repository. Development-pilot results cannot
+be reported as untouched or production evaluation results.
+
+Completed worklists are validated through the canonical evidence-grounded
+alignment contract before comparison. Reviewers must cover identical task and
+response records, and unexpected prediction fields are rejected. Status
+agreement remains provisional; disagreements produce a private human
+adjudication queue preserving all source reviews. Final adjudication is a new,
+complete human assessment rather than a vote or mutation of reviewer records.
+
+## Task Alignment Evaluation Protocol v1
+
+### Decision
+
+Added a provider-neutral offline evaluator for comparing one provider's run
+records with canonical human task-alignment references. It reports run-status
+coverage, conditional requirement-status agreement, strict response agreement,
+a four-status confusion matrix, per-status diagnostics, and privacy-safe
+mismatch identifiers. Evidence-span equality and overlap are retained only as
+descriptive diagnostics.
+
+### Boundaries
+
+Development and sealed-evaluation inputs must remain role-pure and are never
+combined. Sealed evaluation requires explicit authorization. Conditional
+agreement excludes non-completed runs but must always be interpreted alongside
+coverage; undefined denominators remain `None`. Evidence overlap is not treated
+as semantic correctness. Aggregate output contains no learner text and does
+not represent an essay, proficiency, or exam score.
+
+---
+
+# 2026-10-30
+
+## Task Alignment Experiment Freeze v1
+
+### Decision
+
+Added a deterministic experiment manifest that binds role-pure dataset files,
+canonical dataset content, protocol versions, provider specification, adapter
+version, prompt-template hash, and a closed generation configuration. The
+frozen evaluator validates all current inputs against this manifest and binds
+the result to its experiment ID and manifest SHA-256.
+
+### Boundaries
+
+The manifest contains counts and hashes but no prompt, source material, learner
+text, evidence quotation, or participant ID. Provider configuration cannot
+carry arbitrary credential fields. SHA-256 detects configuration drift but is
+not an authenticity signature. Development and sealed manifests remain
+separate; sealed creation and evaluation both require explicit authorization.
+Local artifacts are stored only under the ignored alignment directory and are
+never overwritten automatically.
+
+## Task Alignment Strict JSON Adapter v1
+
+### Decision
+
+Added a versioned, hashed task-alignment prompt template and a provider-neutral
+JSON adapter. The prompt separates fixed instructions from untrusted task and
+learner data, prohibits scoring and correction, and requests requirement-level
+statuses with exact evidence offsets. The adapter accepts only plain JSON with
+a closed output shape and binds every run to its adapter and prompt provenance.
+
+### Boundaries
+
+No external model SDK, endpoint, credential, or paid API was added. A concrete
+completion callable must be injected and remains responsible for timeout and
+authorized data handling. Markdown, commentary, unknown fields, and malformed
+JSON are rejected rather than repaired. Raw completion text is not retained;
+canonical evidence quotations remain in private provider-run assessments.
+Schema validity does not establish semantic correctness, so human-reference
+evaluation remains required before learner-facing use.
+
+## Task Alignment Frozen Batch Runner v1
+
+### Decision
+
+Added an in-memory batch runner that validates the frozen experiment before the
+first provider call and records one outcome for every response. Human references
+are used only for manifest validation and never enter prompt packages. Batch
+artifacts retain experiment, manifest, provider, adapter, and run-status
+provenance and can be passed directly to the frozen evaluator.
+
+### Boundaries
+
+One response failure does not stop later records, and every completed,
+abstained, timed-out, failed, or invalid run remains visible. Batch summaries
+are validated against their run records; detached or tampered summaries are
+rejected. The project still provides no concrete external client. Completed
+runs contain learner evidence quotations, so batches remain private and must be
+saved only under the ignored local directory using create-only persistence.
+
+## Task Alignment Data-First Development Pilot v1
+
+### Decision
+
+Deferred concrete model selection until a human-annotated development pilot is
+complete. Added an aggregate readiness gate for canonical development tasks and
+responses. It checks task requirements, role purity, task representation,
+response-mode coverage, participant coverage, consent/right categories, and
+explicit privacy and reviewer declarations without returning learner text.
+
+### Boundaries
+
+The initial operational targets are 12 responses, 3 tasks, 6 pseudonymous
+participants, 2 response modes, 2 independent reviewers, and a separately
+recorded adjudication role. These are manageable annotation-pilot targets, not
+a power analysis or production-performance threshold. Smaller valid data are
+reported as below plan; missing requirements or unconfirmed privacy, consent,
+reviewer, and adjudication safeguards block annotation. Existing corpora cannot
+be repurposed without confirming their rights and consent scope.
+
+---
+
+# 2026-11-03
+
+## Task Alignment Intake Importer v1
+
+### Decision
+
+Added `src/alignment_intake.py` and `scripts/import_alignment_intake.py` to
+convert hand-prepared intake files (`local/intake/tasks.json` and
+`local/intake/responses.jsonl`) into the canonical private
+`tasks_v1.jsonl` and `responses_v1.jsonl` records. The importer reuses
+`create_task_context()` and `validate_alignment_source_records()` instead of
+duplicating validation.
+
+### Boundaries
+
+All imported records are `development`; the importer cannot create sealed
+evaluation data. Learner text is copied exactly and hashed without trimming or
+correction. Closed intake field sets reject unexpected columns, duplicate
+requirement descriptions are rejected instead of silently dropped, and
+source-based tasks require source material. The script refuses to overwrite
+existing canonical files or to write to a path not ignored by Git, and prints
+aggregate counts only. Readiness declarations remain explicit CLI
+confirmations in the existing readiness audit.
