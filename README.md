@@ -173,7 +173,10 @@ Detailed decisions and their reasons are recorded in
 - Reliability rules and ML results have not been validated on independent
   data.
 - Lexical and syntactic metrics are unstable on very short texts (for example,
-  under about 150 words).
+  under about 150 words). Student and teacher reports add a
+  `text_length_measurement` note below this threshold, and
+  `lexical.diversity.mattr_method` shows when MATTR fell back to plain TTR
+  because a text had fewer content words than one 50-word window.
 - The task-alignment pilot is designed (protocols, validators, blind reviewer
   worklists) but has not been run with human reviewers.
 

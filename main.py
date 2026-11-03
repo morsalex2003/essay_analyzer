@@ -2,6 +2,7 @@ from src.analysis import analyze_writing
 from src.cefr import load_cefr_vocabulary
 from src.efllex import load_efllex_vocabulary
 from src.reader import read_essay
+from src.reporting import MIN_STABLE_METRIC_WORD_COUNT
 
 text = read_essay("essays/sample.txt")
 cefr_vocabulary = load_cefr_vocabulary()
@@ -22,6 +23,7 @@ sentences = input_summary["sentence_count"]
 unique_words = lexical_data["unique_words"]
 diversity = lexical_data["diversity"]["ttr"]
 mattr = lexical_data["diversity"]["mattr"]
+mattr_method = lexical_data["diversity"]["mattr_method"]
 pos_counts = descriptive_statistics["pos_counts"]
 subordinate_clauses = syntax_data["dependent_clauses"]
 longest_sentence = descriptive_statistics["longest_sentence_length"]
@@ -39,10 +41,18 @@ print("Essay analysis")
 print("Characters:", characters)
 print("Words:", words)
 print("Sentences:", sentences)
+
+if words < MIN_STABLE_METRIC_WORD_COUNT:
+    print(
+        "Note: fewer than",
+        MIN_STABLE_METRIC_WORD_COUNT,
+        "words; lexical and syntax metrics below are unstable.",
+    )
+
 print("Unique words:", unique_words)
 print("Lexical diversity:")
 print("TTR (all non-punctuation lemmas):", round(diversity, 3))
-print("MATTR (content words):", round(mattr, 3))
+print("MATTR (content words):", round(mattr, 3), "-", mattr_method)
 print("Nouns:", pos_counts.get("NOUN", 0))
 print("Verbs:", pos_counts.get("VERB", 0))
 print("Adjectives:", pos_counts.get("ADJ", 0))

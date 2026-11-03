@@ -688,3 +688,22 @@ source-based tasks require source material. The script refuses to overwrite
 existing canonical files or to write to a path not ignored by Git, and prints
 aggregate counts only. Readiness declarations remain explicit CLI
 confirmations in the existing readiness audit.
+
+## Short-Text Measurement Notes v1
+
+### Decision
+
+`calculate_mattr()` returns plain TTR when a text has fewer content words than
+one window, but results and reports still labelled the value MATTR. Analysis
+results now record `lexical.diversity.mattr_method` (`moving_average`,
+`ttr_fallback_below_window`, or `no_tokens`). Reports add a
+`text_length_measurement` note when a text has fewer than 150 words or when
+MATTR fell back to TTR; revision comparisons show the MATTR method for both
+revisions. The CLI demo prints the method and the short-text note.
+
+### Boundaries
+
+The 150-word threshold is the existing README guidance, not a validated
+cut-off. The note is a measurement warning, not a judgement about the writing,
+and no metric value or score changes. The field is additive, so
+`ANALYSIS_SCHEMA_VERSION` stays 1.0.

@@ -205,6 +205,14 @@ def compare_revisions(
                 "metrics, not writing quality."
             ),
         },
+        "mattr_method": {
+            "before": original_lexical["diversity"]["mattr_method"],
+            "after": revised_lexical["diversity"]["mattr_method"],
+            "interpretation_note": (
+                "A MATTR delta is only comparable when both revisions use "
+                "the moving_average method."
+            ),
+        },
         "cefr_changes": _cefr_changes(
             original_analysis,
             revised_analysis,

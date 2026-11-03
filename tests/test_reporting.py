@@ -2,7 +2,11 @@ import copy
 import json
 
 from src.analysis import analyze_writing
-from src.reporting import build_student_report, build_teacher_report
+from src.reporting import (
+    MIN_STABLE_METRIC_WORD_COUNT,
+    build_student_report,
+    build_teacher_report,
+)
 
 
 def test_student_report_uses_evidence_without_claiming_spelling_error():
@@ -57,11 +61,13 @@ def test_syntax_warning_is_a_measurement_note_not_writing_feedback():
         "or do the science article."
     )
     report = build_student_report(analysis)
+    syntax_notes = []
+    for note in report["measurement_notes"]:
+        if note["note_id"] == "syntax_measurement_reliability":
+            syntax_notes.append(note)
 
-    assert len(report["measurement_notes"]) == 1
-    assert "not a grammar judgement" in report["measurement_notes"][0][
-        "message"
-    ]
+    assert len(syntax_notes) == 1
+    assert "not a grammar judgement" in syntax_notes[0]["message"]
 
 
 def test_teacher_report_preserves_diagnostic_flags_and_full_metrics():
@@ -88,3 +94,78 @@ def test_reports_are_json_serializable_and_do_not_mutate_analysis():
     json.dumps(student_report)
     json.dumps(teacher_report)
     assert analysis == original_analysis
+
+
+def _note_ids(report):
+    note_ids = []
+    for note in report["measurement_notes"]:
+        note_ids.append(note["note_id"])
+
+    return note_ids
+
+
+def _sentences_with_distinct_words(sentence_count):
+    # Each sentence adds new content words, so long inputs reach the MATTR
+    # window without repeating a single filler word.
+    sentences = []
+    for sentence_index in range(sentence_count):
+        sentences.append(
+            "Student number "
+            + str(sentence_index)
+            + " carefully explains another interesting idea today."
+        )
+
+    return " ".join(sentences)
+
+
+def test_short_text_gets_length_note_with_mattr_fallback():
+    analysis = analyze_writing("Students learn quickly when teachers explain.")
+    report = build_student_report(analysis)
+    length_note = report["measurement_notes"][0]
+
+    assert length_note["note_id"] == "text_length_measurement"
+    assert length_note["word_count"] < MIN_STABLE_METRIC_WORD_COUNT
+    assert length_note["mattr_method"] == "ttr_fallback_below_window"
+    assert "plain type-token ratio" in length_note["message"]
+    assert "not a judgement" in length_note["message"]
+    assert report["overview"]["mattr_method"] == "ttr_fallback_below_window"
+
+
+def test_short_text_with_full_mattr_window_still_gets_length_note():
+    analysis = analyze_writing(_sentences_with_distinct_words(10))
+    report = build_student_report(analysis)
+    length_note = report["measurement_notes"][0]
+
+    assert analysis["input_summary"]["word_count"] < (
+        MIN_STABLE_METRIC_WORD_COUNT
+    )
+    assert analysis["lexical"]["diversity"]["mattr_method"] == (
+        "moving_average"
+    )
+    assert length_note["note_id"] == "text_length_measurement"
+    assert "plain type-token ratio" not in length_note["message"]
+
+
+def test_long_text_has_no_length_note():
+    analysis = analyze_writing(_sentences_with_distinct_words(25))
+    student_report = build_student_report(analysis)
+    teacher_report = build_teacher_report(analysis)
+
+    assert analysis["input_summary"]["word_count"] >= (
+        MIN_STABLE_METRIC_WORD_COUNT
+    )
+    assert "text_length_measurement" not in _note_ids(student_report)
+    assert teacher_report["text_length_note"] is None
+    assert teacher_report["method_notes"]["mattr_method"] == (
+        "moving_average"
+    )
+
+
+def test_empty_text_length_note_reports_no_mattr_tokens():
+    report = build_teacher_report(analyze_writing(""))
+
+    assert report["text_length_note"]["word_count"] == 0
+    assert report["text_length_note"]["mattr_method"] == "no_tokens"
+    assert report["method_notes"]["minimum_stable_word_count"] == (
+        MIN_STABLE_METRIC_WORD_COUNT
+    )

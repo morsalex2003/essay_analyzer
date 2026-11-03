@@ -55,6 +55,7 @@ def test_diversity_token_policies_are_explicit():
     assert diversity["mattr_token_policy"] == "content_words"
     assert diversity["ttr_token_count"] == 5
     assert diversity["mattr_token_count"] == 2
+    assert diversity["mattr_method"] == "ttr_fallback_below_window"
 
 
 def test_surface_form_fallback_prevents_bad_species_lemma_in_word_lists():
@@ -170,6 +171,7 @@ def test_empty_text_is_safe():
     }
     assert result["lexical"]["diversity"]["ttr"] == 0.0
     assert result["lexical"]["diversity"]["mattr"] == 0.0
+    assert result["lexical"]["diversity"]["mattr_method"] == "no_tokens"
     assert result["syntax_reliability"]["syntax_reliability"] == (
         "not_analyzable"
     )

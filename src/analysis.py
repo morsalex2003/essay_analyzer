@@ -29,6 +29,10 @@ from src.tasks import copy_task_context
 ANALYSIS_SCHEMA_VERSION = "1.0"
 DEFAULT_MATTR_WINDOW_SIZE = 50
 
+MATTR_METHOD_MOVING_AVERAGE = "moving_average"
+MATTR_METHOD_TTR_FALLBACK = "ttr_fallback_below_window"
+MATTR_METHOD_NO_TOKENS = "no_tokens"
+
 
 def _word_count(document: Doc) -> int:
     count = 0
@@ -38,6 +42,21 @@ def _word_count(document: Doc) -> int:
             count += 1
 
     return count
+
+
+def _mattr_method(token_count: int, window_size: int) -> str:
+    """Name the calculation that calculate_mattr() actually performed.
+
+    With fewer tokens than one window, calculate_mattr() returns plain TTR,
+    which is not comparable with a moving-average value from a longer text.
+    """
+    if token_count == 0:
+        return MATTR_METHOD_NO_TOKENS
+
+    if token_count < window_size:
+        return MATTR_METHOD_TTR_FALLBACK
+
+    return MATTR_METHOD_MOVING_AVERAGE
 
 
 def _pos_counts(document: Doc) -> dict[str, int]:
@@ -206,6 +225,10 @@ def analyze_writing(
             ),
             "mattr_token_count": len(content_tokens),
             "mattr_window_size": DEFAULT_MATTR_WINDOW_SIZE,
+            "mattr_method": _mattr_method(
+                len(content_tokens),
+                DEFAULT_MATTR_WINDOW_SIZE,
+            ),
             "mattr_token_policy": "content_words",
         },
         "frequency": frequency,

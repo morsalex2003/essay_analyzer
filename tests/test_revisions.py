@@ -120,3 +120,19 @@ def test_revision_report_is_json_serializable_and_does_not_mutate_inputs():
     json.dumps(comparison)
     assert original == original_copy
     assert revised == revised_copy
+
+
+def test_revision_comparison_reports_mattr_method_for_each_revision():
+    original = analyze_writing("Students learn.")
+    revised = analyze_writing("Students learn because teachers explain.")
+    comparison = compare_revisions(original, revised)
+
+    assert comparison["mattr_method"]["before"] == (
+        "ttr_fallback_below_window"
+    )
+    assert comparison["mattr_method"]["after"] == (
+        "ttr_fallback_below_window"
+    )
+    assert "only comparable" in comparison["mattr_method"][
+        "interpretation_note"
+    ]

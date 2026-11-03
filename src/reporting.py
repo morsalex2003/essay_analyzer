@@ -11,6 +11,10 @@ MIN_REPETITION_REVIEW_COUNT = 3
 MIN_REPETITION_TOKEN_SHARE = 0.05
 MAX_REVIEW_WORDS = 5
 
+# Below about this many words, lexical and syntactic metrics change a lot
+# with each added or removed sentence (see README limitations).
+MIN_STABLE_METRIC_WORD_COUNT = 150
+
 
 def _task_summary(analysis, alignment_assessment):
     alignment = copy_alignment_for_analysis(
@@ -123,12 +127,54 @@ def _student_repetition_priority(analysis):
     }
 
 
-def _student_measurement_notes(analysis):
-    notes = []
+def _text_length_note(analysis):
+    word_count = analysis["input_summary"]["word_count"]
+    diversity = analysis["lexical"]["diversity"]
+    mattr_method = diversity["mattr_method"]
+    is_short = word_count < MIN_STABLE_METRIC_WORD_COUNT
+    uses_mattr_fallback = mattr_method != "moving_average"
+
+    if not is_short and not uses_mattr_fallback:
+        return None
+
+    message = (
+        "This text has fewer than "
+        + str(MIN_STABLE_METRIC_WORD_COUNT)
+        + " words. Lexical and syntax measurements are unstable on short "
+        "texts and should not be compared with longer texts."
+    )
+
+    if not is_short:
+        message = (
+            "Lexical diversity was measured on very few content words and "
+            "should not be compared with longer texts."
+        )
+
+    if uses_mattr_fallback:
+        message += (
+            " The text has fewer content words than one MATTR window of "
+            + str(diversity["mattr_window_size"])
+            + ", so the MATTR value is a plain type-token ratio."
+        )
+
+    return {
+        "note_id": "text_length_measurement",
+        "title": "Text is too short for stable measurements",
+        "message": message + " This is a measurement warning, not a "
+        "judgement about the writing.",
+        "word_count": word_count,
+        "minimum_stable_word_count": MIN_STABLE_METRIC_WORD_COUNT,
+        "mattr_method": mattr_method,
+        "mattr_token_count": diversity["mattr_token_count"],
+        "mattr_window_size": diversity["mattr_window_size"],
+    }
+
+
+def _syntax_reliability_note(analysis):
     reliability = analysis["syntax_reliability"]["syntax_reliability"]
 
     if reliability == "high":
-        return notes
+        return None
 
     affected_sentences = []
 
@@ -143,19 +189,29 @@ def _student_measurement_notes(analysis):
                 }
             )
 
-    notes.append(
-        {
-            "note_id": "syntax_measurement_reliability",
-            "title": "Some syntax measurements need review",
-            "message": (
-                "The parser found structures that may make sentence-level "
-                "syntax measurements less reliable. This is a measurement "
-                "warning, not a grammar judgement."
-            ),
-            "overall_reliability": reliability,
-            "sentences": affected_sentences,
-        }
-    )
+    return {
+        "note_id": "syntax_measurement_reliability",
+        "title": "Some syntax measurements need review",
+        "message": (
+            "The parser found structures that may make sentence-level "
+            "syntax measurements less reliable. This is a measurement "
+            "warning, not a grammar judgement."
+        ),
+        "overall_reliability": reliability,
+        "sentences": affected_sentences,
+    }
+
+
+def _student_measurement_notes(analysis):
+    notes = []
+
+    length_note = _text_length_note(analysis)
+    if length_note is not None:
+        notes.append(length_note)
+
+    syntax_note = _syntax_reliability_note(analysis)
+    if syntax_note is not None:
+        notes.append(syntax_note)
 
     return notes
 
@@ -192,6 +248,7 @@ def build_student_report(
             "sentence_count": analysis["input_summary"]["sentence_count"],
             "mattr": diversity["mattr"],
             "mattr_window_size": diversity["mattr_window_size"],
+            "mattr_method": diversity["mattr_method"],
             "average_sentence_length": syntax["average_sentence_length"],
             "clause_density": syntax["clause_density"],
         },
@@ -233,6 +290,7 @@ def build_teacher_report(
             "warnings before interpreting syntax metrics."
         ),
         "input_summary": analysis["input_summary"],
+        "text_length_note": _text_length_note(analysis),
         "review_queue": {
             "unknown_frequency_words": lexical["evidence"][
                 "unknown_frequency_words"
@@ -256,6 +314,8 @@ def build_teacher_report(
             "mattr_window_size": lexical["diversity"][
                 "mattr_window_size"
             ],
+            "mattr_method": lexical["diversity"]["mattr_method"],
+            "minimum_stable_word_count": MIN_STABLE_METRIC_WORD_COUNT,
             "repetition_token_policy": lexical[
                 "repetition_token_policy"
             ],
