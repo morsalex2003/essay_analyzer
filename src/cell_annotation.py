@@ -212,12 +212,22 @@ class SentenceParser:
     def __init__(self, nlp, essays_by_id):
         self._nlp = nlp
         self._essays_by_id = essays_by_id
+        self._documents_by_essay = {}
         self._sentences_by_essay = {}
+
+    def document(self, essay_id: str):
+        if essay_id not in self._documents_by_essay:
+            self._documents_by_essay[essay_id] = self._nlp(
+                self._essays_by_id[essay_id]["original_text"]
+            )
+
+        return self._documents_by_essay[essay_id]
 
     def sentences(self, essay_id: str):
         if essay_id not in self._sentences_by_essay:
-            document = self._nlp(self._essays_by_id[essay_id]["original_text"])
-            self._sentences_by_essay[essay_id] = list(document.sents)
+            self._sentences_by_essay[essay_id] = list(
+                self.document(essay_id).sents
+            )
 
         return self._sentences_by_essay[essay_id]
 

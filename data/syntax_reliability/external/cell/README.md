@@ -75,3 +75,19 @@ changed. Running the script again continues at the first unlabelled sentence,
 The script refuses to run if the installed spaCy version or model differs from
 the frozen pilot provenance. The validator checks the labelled ledger as well
 when it exists.
+
+Score the frozen Syntax Reliability v1.2 heuristic against the labels so far:
+
+```text
+python scripts/evaluate_cell_reliability_pilot.py
+```
+
+The heuristic runs on each sentence inside its essay parse, as in
+`analyze_writing()` and as the annotator saw it. The JSON report contains a
+label-by-verdict table, binary UNRELIABLE metrics at two operating points
+(`warning` = medium or low, matching the Dataset v1 baseline; `low_only`),
+95% Wilson intervals for precision and recall, recall by failure type and by
+selection structure, and the ledger positions of misses and false warnings.
+It contains no learner text. `status` is `partial` until all 420 sentences are
+labelled. The pilot uses development students only, so its results are
+development estimates, not holdout evaluation.

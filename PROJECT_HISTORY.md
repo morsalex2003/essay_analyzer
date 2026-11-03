@@ -774,3 +774,28 @@ requires exactly that. The enum change is additive, so record
 until they are labelled. A single human annotator is still not
 multi-annotator gold.
 
+## CELL Reliability Pilot Evaluation v1
+
+### Decision
+
+Added `src/cell_pilot_evaluation.py` and
+`scripts/evaluate_cell_reliability_pilot.py` to score the frozen Syntax
+Reliability v1.2 heuristic against human CELL pilot labels. The heuristic runs
+on each sentence inside its essay parse with the essay-level clause summary,
+which is what `analyze_writing()` reports and what the annotator sees. The
+report gives a four-label by four-verdict table, binary UNRELIABLE metrics at
+the `warning` operating point (medium or low, as in the Dataset v1 baseline)
+and a stricter `low_only` point, 95% Wilson intervals for precision and
+recall, warning recall by failure type and selection structure, and ledger
+positions of errors for review in the annotation tool.
+
+### Boundaries
+
+Dataset v1 parsed sentences in isolation, so pilot and Dataset v1 numbers are
+related but not identical measurements. Analyzable sentences on which the
+heuristic abstains are counted separately rather than scored. Partial
+labelling is reported as `partial` with coverage counts. The script refuses
+records outside the development split; the holdout remains unopened. No
+threshold, rule, or model was changed, and the report contains no learner
+text.
+
