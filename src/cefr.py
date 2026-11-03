@@ -104,3 +104,4 @@ def load_cefr_vocabulary(
     load_cefr_dataset(octanove_path, vocabulary)
 
     return vocabulary
+

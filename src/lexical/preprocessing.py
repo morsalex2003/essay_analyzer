@@ -41,7 +41,7 @@ def normalize_word_for_frequency(token):
         for candidate in noun_candidates:
             candidate_frequency = zipf_frequency(candidate, "en")
 
-            if candidate_frequency > lemma_frequency:
+            if candidate_frequency >= lemma_frequency + 1.0:
                 lemma_word = candidate
                 lemma_frequency = candidate_frequency
 
@@ -52,12 +52,16 @@ def normalize_word_for_frequency(token):
 
 
 def preprocess_tokens(
-    text,
+    text_or_document: str | Doc,
     include_pos=False,
     content_words_only=True,
     exclude_stop_words=False,
 ):
-    doc = nlp(text)
+    if isinstance(text_or_document, Doc):
+        doc = text_or_document
+    else:
+        doc = nlp(text_or_document)
+
     normalized_tokens = []
 
     for token in doc:
@@ -81,3 +85,26 @@ def preprocess_tokens(
             normalized_tokens.append(word)
 
     return normalized_tokens
+
+
+def preprocess_surface_tokens(
+    text_or_document: str | Doc,
+    exclude_stop_words=False,
+):
+    if isinstance(text_or_document, Doc):
+        doc = text_or_document
+    else:
+        doc = nlp(text_or_document)
+
+    surface_tokens = []
+
+    for token in doc:
+        if token.is_punct or token.is_space:
+            continue
+
+        if exclude_stop_words and token.is_stop:
+            continue
+
+        surface_tokens.append(token.text.lower())
+
+    return surface_tokens

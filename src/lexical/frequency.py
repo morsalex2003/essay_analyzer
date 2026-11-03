@@ -1,6 +1,9 @@
 from wordfreq import zipf_frequency
 
-from src.lexical.preprocessing import preprocess_tokens
+from src.lexical.preprocessing import (
+    preprocess_surface_tokens,
+    preprocess_tokens,
+)
 
 
 def get_frequency(item):
@@ -23,9 +26,8 @@ def word_frequencies(text):
 
 
 def most_common_words(text, limit=5):
-    words = preprocess_tokens(
+    words = preprocess_surface_tokens(
         text,
-        content_words_only=False,
         exclude_stop_words=True,
     )
     frequencies = {}
@@ -46,9 +48,8 @@ def most_common_words(text, limit=5):
 
 
 def repeated_words(text):
-    words = preprocess_tokens(
+    words = preprocess_surface_tokens(
         text,
-        content_words_only=False,
         exclude_stop_words=True,
     )
     frequencies = {}
@@ -69,9 +70,8 @@ def repeated_words(text):
 
 
 def repetition_percentage(text):
-    words = preprocess_tokens(
+    words = preprocess_surface_tokens(
         text,
-        content_words_only=False,
         exclude_stop_words=True,
     )
 

@@ -55,6 +55,16 @@ class FrequencyNormalizationTests(unittest.TestCase):
         self.assertEqual(normalize_word_for_frequency(token), "specie")
         self.assertEqual(frequency_data["rarest_words"][0][0], "specie")
 
+    def test_news_is_not_normalized_to_new(self):
+        frequency_data = frequency_analysis("The news is important.")
+        rarest_word_names = []
+
+        for word, frequency in frequency_data["rarest_words"]:
+            rarest_word_names.append(word)
+
+        self.assertIn("news", rarest_word_names)
+        self.assertNotIn("new", rarest_word_names)
+
     def test_unknown_word_is_not_rare_or_sophisticated(self):
         text = "The technlogy is the technlogy."
         frequency_data = frequency_analysis(text)
