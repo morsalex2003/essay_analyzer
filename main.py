@@ -1,51 +1,38 @@
+from src.analysis import analyze_writing
 from src.cefr import load_cefr_vocabulary
 from src.efllex import load_efllex_vocabulary
-from src.lexical.cefr import cefr_analysis
-from src.lexical.diversity import calculate_mattr, calculate_ttr
-from src.lexical.efllex import efllex_analysis
-from src.lexical.frequency import (
-    frequency_analysis,
-    most_common_words,
-    repeated_words,
-    repetition_percentage,
-)
-from src.lexical.preprocessing import preprocess_tokens
-from src.lexical.sophistication import lexical_sophistication
 from src.reader import read_essay
-from src.statistics import count_characters, count_words
-from src.syntax.complexity import (
-    analyze_syntax,
-    complex_sentence_percentage,
-    count_pos,
-    count_sentences,
-    count_subordinate_clauses,
-    longest_sentence_length,
-)
 
 text = read_essay("essays/sample.txt")
 cefr_vocabulary = load_cefr_vocabulary()
 efllex_vocabulary = load_efllex_vocabulary()
-
-characters = count_characters(text)
-words = count_words(text)
-sentences = count_sentences(text)
-lexical_tokens = preprocess_tokens(text)
-ttr_tokens = preprocess_tokens(text, content_words_only=False)
-unique_words = len(set(ttr_tokens))
-diversity = calculate_ttr(ttr_tokens)
-mattr = calculate_mattr(lexical_tokens)
-pos_counts = count_pos(text)
-subordinate_clauses = count_subordinate_clauses(text)
-longest_sentence = longest_sentence_length(text)
-complex_percentage = complex_sentence_percentage(text)
-syntax_data = analyze_syntax(text)
-common_words = most_common_words(text)
-repetitions = repeated_words(text)
-repetition = repetition_percentage(text)
-frequency_data = frequency_analysis(text)
-sophistication = lexical_sophistication(text)
-cefr_data = cefr_analysis(text, cefr_vocabulary)
-efllex_data = efllex_analysis(text, efllex_vocabulary)
+analysis = analyze_writing(
+    text,
+    cefr_vocabulary=cefr_vocabulary,
+    efllex_vocabulary=efllex_vocabulary,
+    include_research_metrics=True,
+)
+input_summary = analysis["input_summary"]
+descriptive_statistics = analysis["descriptive_statistics"]
+lexical_data = analysis["lexical"]
+syntax_data = analysis["syntax"]
+characters = input_summary["character_count"]
+words = input_summary["word_count"]
+sentences = input_summary["sentence_count"]
+unique_words = lexical_data["unique_words"]
+diversity = lexical_data["diversity"]["ttr"]
+mattr = lexical_data["diversity"]["mattr"]
+pos_counts = descriptive_statistics["pos_counts"]
+subordinate_clauses = syntax_data["dependent_clauses"]
+longest_sentence = descriptive_statistics["longest_sentence_length"]
+complex_percentage = descriptive_statistics["complex_sentence_percentage"]
+common_words = lexical_data["most_common_words"]
+repetitions = lexical_data["repeated_words"]
+repetition = lexical_data["repetition_percentage"]
+frequency_data = lexical_data["frequency"]
+sophistication = lexical_data["sophistication"]
+cefr_data = analysis["cefr"]
+efllex_data = analysis["research_metrics"]["efllex"]
 
 
 print("Essay analysis")
@@ -54,8 +41,8 @@ print("Words:", words)
 print("Sentences:", sentences)
 print("Unique words:", unique_words)
 print("Lexical diversity:")
-print("TTR:", round(diversity, 3))
-print("MATTR:", round(mattr, 3))
+print("TTR (all non-punctuation lemmas):", round(diversity, 3))
+print("MATTR (content words):", round(mattr, 3))
 print("Nouns:", pos_counts.get("NOUN", 0))
 print("Verbs:", pos_counts.get("VERB", 0))
 print("Adjectives:", pos_counts.get("ADJ", 0))
@@ -105,7 +92,7 @@ print(
 )
 
 print("Most common words:", common_words)
-print("Repeated words:")
+print("Repeated surface forms:")
 for word, frequency in repetitions.items():
     print(word, "-", frequency)
 
@@ -161,7 +148,7 @@ if len(cefr_data["unknown_words"]) > 0:
         print(word)
 
 print()
-print("EFLLex Learner Association Profile:")
+print("Research-only EFLLex Learner Association Profile:")
 for level in ("A1", "A2", "B1", "B2", "C1"):
     percentage = efllex_data["learner_association_profile"][level]
     print(level + " association:", round(percentage, 1), "%")

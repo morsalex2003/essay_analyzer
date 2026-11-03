@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0",
+  "description": "Private requirement-level writing task alignment evaluation dataset.",
+  "privacy": {
+    "raw_files_version_controlled": false,
+    "participant_ids": "pseudonymous",
+    "direct_identifiers_allowed": false
+  },
+  "enums": {
+    "data_role": [
+      "development",
+      "sealed_evaluation"
+    ],
+    "consent_status": [
+      "research_use_confirmed",
+      "educational_use_confirmed",
+      "internal_evaluation_only"
+    ],
+    "annotation_origin": [
+      "human_reference",
+      "model_assisted_human_adjudication"
+    ],
+    "content_rights_status": [
+      "owner_provided",
+      "licensed_for_evaluation",
+      "permission_confirmed",
+      "restricted_local_only"
+    ],
+    "adjudication_status": [
+      "single",
+      "adjudicated"
+    ],
+    "alignment_status": [
+      "met",
+      "partially_met",
+      "not_met",
+      "not_assessed"
+    ]
+  },
+  "task_record": {
+    "required_fields": [
+      "schema_version",
+      "task_id",
+      "source_stage",
+      "data_role",
+      "content_rights_status",
+      "task_context"
+    ],
+    "notes": {
+      "task_context": "Canonical src.tasks task context. task_id must match the record.",
+      "content_rights_status": "Explicit permission or restriction status for prompts and source material."
+    }
+  },
+  "response_record": {
+    "required_fields": [
+      "schema_version",
+      "response_id",
+      "task_id",
+      "participant_id",
+      "participant_id_is_pseudonymous",
+      "response_family_id",
+      "source_stage",
+      "data_role",
+      "consent_status",
+      "original_text",
+      "original_text_sha256",
+      "analysis_schema_version"
+    ],
+    "notes": {
+      "original_text": "Exact uncorrected learner response; private and local-only.",
+      "response_family_id": "Stable identifier shared by revisions of one response.",
+      "analysis_schema_version": "Version of src.analysis used to bind reference assessments."
+    }
+  },
+  "assessment_record": {
+    "required_fields": [
+      "schema_version",
+      "assessment_id",
+      "response_id",
+      "annotation_origin",
+      "adjudication_status",
+      "reviewer_id_is_pseudonymous",
+      "alignment_assessment"
+    ],
+    "notes": {
+      "alignment_assessment": "Canonical src.alignment assessment with a human assessor and exact evidence offsets.",
+      "annotation_origin": "Whether the reference was direct human review or model-assisted human adjudication."
+    }
+  },
+  "split_constraints": [
+    "A participant cannot cross development and sealed_evaluation roles.",
+    "A response family cannot cross dataset roles.",
+    "Sentence-level random splitting is prohibited.",
+    "Development data cannot later be called untouched evaluation data."
+  ]
+}
