@@ -1,5 +1,7 @@
 from copy import deepcopy
 from hashlib import sha256
+import json
+from pathlib import Path
 
 import pytest
 
@@ -330,3 +332,39 @@ def test_input_records_are_not_mutated():
 
     assert intake_tasks == original_tasks
     assert intake_responses == original_responses
+
+
+def test_tracked_intake_template_meets_development_pilot_plan():
+    # The template is synthetic example data, not learner text. Keeping it
+    # passing here guarantees that copying it into local/intake/ works.
+    template_directory = (
+        Path(__file__).resolve().parents[1]
+        / "data"
+        / "alignment_evaluation"
+        / "intake_template"
+    )
+    intake_tasks = json.loads(
+        (template_directory / "tasks.json").read_text(encoding="utf-8")
+    )
+    intake_responses = [
+        json.loads(line)
+        for line in (template_directory / "responses.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.strip() != ""
+    ]
+
+    task_records, response_records, _ = import_alignment_intake(
+        intake_tasks,
+        intake_responses,
+        TEST_ANALYSIS_SCHEMA_VERSION,
+    )
+    result = assess_development_pilot_readiness(
+        task_records=task_records,
+        response_records=response_records,
+        declarations=create_readiness_declarations(True, True, True, True),
+    )
+
+    assert result["operational_status"] == "meets_development_pilot_plan"
+    assert result["blockers"] == []
+    assert result["warnings"] == []

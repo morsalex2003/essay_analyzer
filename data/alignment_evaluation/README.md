@@ -86,6 +86,15 @@ accidental identifier columns are not carried forward. It refuses to overwrite
 existing canonical files or to write to a path that Git would track, and it
 prints aggregate counts only.
 
+`intake_template/` contains a tracked, complete example of both intake files:
+3 tasks (independent, source-based, and discussion modes), 12 responses, and
+6 pseudonymous participants. All prompts, sources, and responses are synthetic
+texts written for this template, not learner data. The template meets the
+development pilot plan and is checked by
+`tests/test_alignment_intake.py`, so it can be copied into `local/intake/` as
+a starting point and then replaced record by record with real data. It must
+never be imported as pilot data itself.
+
 Before generating worklists, run the private aggregate readiness audit:
 
 ```text

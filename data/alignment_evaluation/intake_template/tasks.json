@@ -1,0 +1,47 @@
+[
+  {
+    "task_id": "template_task_01",
+    "response_mode": "independent_response",
+    "prompt": "Some people think that students should do their homework at school instead of at home. Do you agree or disagree?",
+    "instructions": "Write at least 60 words. Give your opinion and support it with reasons and an example.",
+    "source_materials": [],
+    "requirements": [
+      {"requirement_id": "req_01", "description": "States a clear position on doing homework at school."},
+      {"requirement_id": "req_02", "description": "Gives at least one reason for the position."},
+      {"requirement_id": "req_03", "description": "Supports a reason with an example."}
+    ],
+    "content_rights_status": "owner_provided"
+  },
+  {
+    "task_id": "template_task_02",
+    "response_mode": "source_based_response",
+    "prompt": "Summarize the main idea of the notice and explain whether you would join the program.",
+    "instructions": "Write at least 60 words. Use information from the notice.",
+    "source_materials": [
+      {
+        "source_id": "source_01",
+        "source_type": "text",
+        "title": "Weekend Garden Program",
+        "content": "The town library is starting a weekend garden program. Volunteers will grow vegetables behind the library every Saturday morning. The vegetables will be given to the local food bank. No experience is needed, and tools are provided."
+      }
+    ],
+    "requirements": [
+      {"requirement_id": "req_01", "description": "Summarizes the purpose of the garden program."},
+      {"requirement_id": "req_02", "description": "Uses at least one specific detail from the notice."},
+      {"requirement_id": "req_03", "description": "Says whether the writer would join and why."}
+    ],
+    "content_rights_status": "owner_provided"
+  },
+  {
+    "task_id": "template_task_03",
+    "response_mode": "discussion_response",
+    "prompt": "Your teacher asks the class: should the school day start one hour later? Reply to the discussion and respond to a classmate who said that starting later would make the day too long.",
+    "instructions": "Write at least 50 words.",
+    "source_materials": [],
+    "requirements": [
+      {"requirement_id": "req_01", "description": "Gives the writer's own view on a later start."},
+      {"requirement_id": "req_02", "description": "Responds to the classmate's point about a longer day."}
+    ],
+    "content_rights_status": "owner_provided"
+  }
+]
