@@ -19,3 +19,13 @@ __pycache__/
 # Private learner-written Syntax Reliability data
 data/syntax_reliability/essays_v1.jsonl
 data/syntax_reliability/annotations_v1.jsonl
+data/syntax_reliability/local/corpus_a_reference_v1.jsonl
+
+# Private local CELL corpus, source manifest, and learner text
+data/syntax_reliability/external/cell/local/
+
+# Private task-alignment evaluation data
+data/alignment_evaluation/tasks_v1.jsonl
+data/alignment_evaluation/responses_v1.jsonl
+data/alignment_evaluation/assessments_v1.jsonl
+data/alignment_evaluation/local/

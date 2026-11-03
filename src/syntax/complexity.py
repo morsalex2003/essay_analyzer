@@ -1,5 +1,7 @@
 from math import sqrt
 
+from spacy.tokens import Doc, Span
+
 from src.nlp.pipeline import nlp
 from src.statistics import count_words
 from src.syntax.clauses import detect_clauses
@@ -154,9 +156,11 @@ def complex_sentence_percentage(text):
     return complex_sentences / len(sentences) * 100
 
 
-def analyze_syntax(text: str) -> dict[str, int | float]:
-    doc = nlp(text)
-    sentences = list(doc.sents)
+def analyze_syntax_document(
+    document: Doc | Span,
+    clause_summary: dict[str, object] | None = None,
+) -> dict[str, int | float]:
+    sentences = list(document.sents)
 
     if len(sentences) == 0:
         return {
@@ -186,7 +190,9 @@ def analyze_syntax(text: str) -> dict[str, int | float]:
 
         sentence_lengths.append(sentence_length)
 
-    clause_summary = detect_clauses(doc)
+    if clause_summary is None:
+        clause_summary = detect_clauses(document)
+
     finite_clauses = len(clause_summary["finite_clause_heads"])
     dependent_clauses = len(clause_summary["dependent_clause_heads"])
     non_finite_units = len(clause_summary["non_finite_heads"])
@@ -214,7 +220,7 @@ def analyze_syntax(text: str) -> dict[str, int | float]:
     subordination_ratio = (
         sentences_with_finite_subordination / total_sentences
     )
-    dependency_distance = _calculate_mean_dependency_distance(doc)
+    dependency_distance = _calculate_mean_dependency_distance(document)
     dependency_tree_depths = _calculate_dependency_tree_depths(sentences)
     mean_tree_depth = sum(dependency_tree_depths) / total_sentences
     max_tree_depth = max(dependency_tree_depths)
@@ -235,3 +241,8 @@ def analyze_syntax(text: str) -> dict[str, int | float]:
         "mean_dependency_tree_depth": mean_tree_depth,
         "max_dependency_tree_depth": max_tree_depth,
     }
+
+
+def analyze_syntax(text: str) -> dict[str, int | float]:
+    document = nlp(text)
+    return analyze_syntax_document(document)

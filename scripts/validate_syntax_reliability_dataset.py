@@ -10,28 +10,89 @@ DATASET_DIRECTORY = (
 ESSAYS_PATH = DATASET_DIRECTORY / "essays_v1.jsonl"
 ANNOTATIONS_PATH = DATASET_DIRECTORY / "annotations_v1.jsonl"
 
-EXPECTED_SOURCE_STAGE = "v12_holdout12"
 EXPECTED_ANNOTATION_ORIGIN = "model_assisted_manual_review"
 EXPECTED_ANNOTATOR_ID = "codex_review_v1"
 EXPECTED_ADJUDICATOR_ID = "human_owner_v1"
 EXPECTED_ADJUDICATION_DATE = "2026-08-17"
-EXPECTED_ESSAY_COUNT = 12
-EXPECTED_SENTENCE_COUNT = 99
-EXPECTED_ADJUDICATED_COUNT = 8
-EXPECTED_LABEL_COUNTS = {
-    "RELIABLE": 78,
-    "MOSTLY_RELIABLE": 5,
-    "UNRELIABLE": 12,
-    "NOT_ANALYZABLE": 4,
+EXPECTED_STAGE_CONFIG = {
+    "v11_dev7": {
+        "essay_count": 7,
+        "sentence_count": 62,
+        "adjudicated_count": 23,
+        "data_status": "development",
+        "label_counts": {
+            "RELIABLE": 43,
+            "MOSTLY_RELIABLE": 2,
+            "UNRELIABLE": 13,
+            "NOT_ANALYZABLE": 4,
+        },
+        "provenance": {
+            "schema_version": "1.0",
+            "repository_commit": (
+                "6f86cf593ecc1b19b00023ebef6c9e60e550c3a3"
+            ),
+            "spacy_version": "3.8.13",
+            "spacy_model_name": "en_core_web_sm",
+            "spacy_model_version": "3.8.0",
+            "clause_detector_version": "2.1",
+            "reliability_version": "1.1",
+        },
+    },
+    "v12_holdout12": {
+        "essay_count": 12,
+        "sentence_count": 99,
+        "adjudicated_count": 8,
+        "data_status": "development",
+        "label_counts": {
+            "RELIABLE": 78,
+            "MOSTLY_RELIABLE": 5,
+            "UNRELIABLE": 12,
+            "NOT_ANALYZABLE": 4,
+        },
+        "provenance": {
+            "schema_version": "1.0",
+            "repository_commit": (
+                "d50bdc81bad5a9e6fc2f19b9a5bd48a790579fc9"
+            ),
+            "spacy_version": "3.8.13",
+            "spacy_model_name": "en_core_web_sm",
+            "spacy_model_version": "3.8.0",
+            "clause_detector_version": "2.1",
+            "reliability_version": "1.2",
+        },
+    },
+    "v11_holdout9": {
+        "essay_count": 9,
+        "sentence_count": 71,
+        "adjudicated_count": 20,
+        "data_status": "development",
+        "label_counts": {
+            "RELIABLE": 43,
+            "MOSTLY_RELIABLE": 7,
+            "UNRELIABLE": 18,
+            "NOT_ANALYZABLE": 3,
+        },
+        "provenance": {
+            "schema_version": "1.0",
+            "repository_commit": (
+                "064658cbfc502fae2481bdd9b5da9377425af32f"
+            ),
+            "spacy_version": "3.8.13",
+            "spacy_model_name": "en_core_web_sm",
+            "spacy_model_version": "3.8.0",
+            "clause_detector_version": "2.1",
+            "reliability_version": "1.1",
+        },
+    },
 }
-EXPECTED_PROVENANCE = {
-    "schema_version": "1.0",
-    "repository_commit": "d50bdc81bad5a9e6fc2f19b9a5bd48a790579fc9",
-    "spacy_version": "3.8.13",
-    "spacy_model_name": "en_core_web_sm",
-    "spacy_model_version": "3.8.0",
-    "clause_detector_version": "2.1",
-    "reliability_version": "1.2",
+EXPECTED_ESSAY_COUNT = 28
+EXPECTED_SENTENCE_COUNT = 232
+EXPECTED_ADJUDICATED_COUNT = 51
+EXPECTED_LABEL_COUNTS = {
+    "RELIABLE": 164,
+    "MOSTLY_RELIABLE": 14,
+    "UNRELIABLE": 43,
+    "NOT_ANALYZABLE": 11,
 }
 
 VALID_MANUAL_LABELS = set(EXPECTED_LABEL_COUNTS)
@@ -170,7 +231,14 @@ def validate_provenance(
     record_name: str,
     errors: list[str],
 ) -> None:
-    for field_name, expected_value in EXPECTED_PROVENANCE.items():
+    source_stage = record.get("source_stage")
+    stage_config = EXPECTED_STAGE_CONFIG.get(source_stage)
+
+    if stage_config is None:
+        return
+
+    expected_provenance = stage_config["provenance"]
+    for field_name, expected_value in expected_provenance.items():
         if record.get(field_name) != expected_value:
             errors.append(
                 f"{record_name}: {field_name} must be {expected_value}"
@@ -193,6 +261,7 @@ def validate_essays(
 ) -> tuple[dict[str, dict[str, object]], int]:
     essays_by_id = {}
     essay_hash_counts = Counter()
+    source_stage_counts = Counter()
 
     for record_number, essay in enumerate(essays, start=1):
         record_name = f"essay record {record_number}"
@@ -208,8 +277,14 @@ def validate_essays(
         else:
             essays_by_id[essay_id] = essay
 
-        if essay.get("source_stage") != EXPECTED_SOURCE_STAGE:
+        source_stage = essay.get("source_stage")
+        stage_config = EXPECTED_STAGE_CONFIG.get(source_stage)
+        if stage_config is None:
             errors.append(f"{essay_id}: unexpected source_stage")
+        else:
+            source_stage_counts[source_stage] += 1
+            if essay.get("data_status") != stage_config["data_status"]:
+                errors.append(f"{essay_id}: unexpected data_status")
 
         if essay.get("data_status") not in VALID_DATA_STATUSES:
             errors.append(f"{essay_id}: invalid data_status")
@@ -223,6 +298,14 @@ def validate_essays(
         errors.append(
             f"expected {EXPECTED_ESSAY_COUNT} essays, found {len(essays)}"
         )
+
+    for source_stage, stage_config in EXPECTED_STAGE_CONFIG.items():
+        expected_count = stage_config["essay_count"]
+        if source_stage_counts[source_stage] != expected_count:
+            errors.append(
+                f"source stage {source_stage} must contain "
+                f"{expected_count} essays"
+            )
 
     duplicate_hash_count = 0
     for hash_count in essay_hash_counts.values():
@@ -241,7 +324,12 @@ def validate_annotations(
     sentence_hash_counts = Counter()
     label_counts = Counter()
     source_stage_counts = Counter()
+    stage_label_counts = {}
+    stage_adjudicated_counts = Counter()
     adjudicated_count = 0
+
+    for source_stage in EXPECTED_STAGE_CONFIG:
+        stage_label_counts[source_stage] = Counter()
 
     for record_number, annotation in enumerate(annotations, start=1):
         record_name = f"annotation record {record_number}"
@@ -268,17 +356,22 @@ def validate_annotations(
             essay = essays_by_id[essay_id]
             if annotation.get("student_id") != essay.get("student_id"):
                 errors.append(f"{sentence_id}: student_id differs from essay")
+            if annotation.get("source_stage") != essay.get("source_stage"):
+                errors.append(f"{sentence_id}: source_stage differs from essay")
 
-        if annotation.get("source_stage") != EXPECTED_SOURCE_STAGE:
+        source_stage = annotation.get("source_stage")
+        if source_stage not in EXPECTED_STAGE_CONFIG:
             errors.append(f"{sentence_id}: unexpected source_stage")
         else:
-            source_stage_counts[EXPECTED_SOURCE_STAGE] += 1
+            source_stage_counts[source_stage] += 1
 
         manual_label = annotation.get("manual_label")
         if manual_label not in VALID_MANUAL_LABELS:
             errors.append(f"{sentence_id}: invalid manual_label")
         else:
             label_counts[manual_label] += 1
+            if source_stage in stage_label_counts:
+                stage_label_counts[source_stage][manual_label] += 1
             expected_label = expected_binary_label(manual_label)
             if annotation.get("usable_binary_label") != expected_label:
                 errors.append(
@@ -327,6 +420,8 @@ def validate_annotations(
             errors.append(f"{sentence_id}: invalid adjudication_status")
         elif adjudication_status == "adjudicated":
             adjudicated_count += 1
+            if source_stage in EXPECTED_STAGE_CONFIG:
+                stage_adjudicated_counts[source_stage] += 1
             if annotation.get("adjudicator_id") != EXPECTED_ADJUDICATOR_ID:
                 errors.append(f"{sentence_id}: invalid adjudicator_id")
             if (
@@ -387,11 +482,29 @@ def validate_annotations(
             f"found {dict(label_counts)}"
         )
 
-    if source_stage_counts[EXPECTED_SOURCE_STAGE] != EXPECTED_SENTENCE_COUNT:
-        errors.append(
-            f"source stage {EXPECTED_SOURCE_STAGE} must contain "
-            f"{EXPECTED_SENTENCE_COUNT} sentences"
-        )
+    for source_stage, stage_config in EXPECTED_STAGE_CONFIG.items():
+        expected_sentence_count = stage_config["sentence_count"]
+        if source_stage_counts[source_stage] != expected_sentence_count:
+            errors.append(
+                f"source stage {source_stage} must contain "
+                f"{expected_sentence_count} sentences"
+            )
+
+        expected_stage_labels = stage_config["label_counts"]
+        found_stage_labels = dict(stage_label_counts[source_stage])
+        if found_stage_labels != expected_stage_labels:
+            errors.append(
+                f"source stage {source_stage} label count mismatch: "
+                f"expected {expected_stage_labels}, "
+                f"found {found_stage_labels}"
+            )
+
+        expected_adjudicated = stage_config["adjudicated_count"]
+        if stage_adjudicated_counts[source_stage] != expected_adjudicated:
+            errors.append(
+                f"source stage {source_stage} must contain "
+                f"{expected_adjudicated} adjudicated records"
+            )
 
     if adjudicated_count != EXPECTED_ADJUDICATED_COUNT:
         errors.append(
@@ -461,6 +574,15 @@ def main() -> None:
     )
     print(f"Human adjudicated: {EXPECTED_ADJUDICATED_COUNT}")
     print(f"Duplicate exact hashes: {duplicate_hash_count}")
+    for source_stage, stage_config in EXPECTED_STAGE_CONFIG.items():
+        stage_labels = stage_config["label_counts"]
+        print(
+            f"{source_stage}: {stage_config['sentence_count']} sentences; "
+            f"R={stage_labels['RELIABLE']}, "
+            f"MR={stage_labels['MOSTLY_RELIABLE']}, "
+            f"U={stage_labels['UNRELIABLE']}, "
+            f"NA={stage_labels['NOT_ANALYZABLE']}"
+        )
 
 
 if __name__ == "__main__":
