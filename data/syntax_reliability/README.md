@@ -67,6 +67,36 @@ otherwise; neither is independent multi-annotator gold by itself.
 - A source fragment without a comparable matrix structure is
   `NOT_ANALYZABLE`, with `abstention_status = "source_fragment"`.
 
+### Clarification: verbs without agreement
+
+Learner texts often contain a predicate verb in the base form where standard
+English needs agreement or tense marking (for example, a synthetic
+"She always walk to school."). A verb counts as a **finite predication**
+in the reference analysis when all of these hold:
+
+- it has its own overt subject;
+- it stands in predicate position: the matrix predicate, a conjoined
+  predicate, or the predicate of a dependent clause;
+- it has no infinitive marker `to`, and no modal or auxiliary already
+  carries finiteness for it.
+
+The missing agreement is the learner's grammar choice; the text is not
+corrected, but the clause still counts as finite. If the parser or Clause
+Detection treats such a verb as non-finite, the finite and non-finite
+inventories both change, so the sentence is `UNRELIABLE` with
+`finite_inventory` and `nonfinite_inventory`.
+
+This clarification does not change two adjudicated Dataset v1 decisions:
+
+- a base-form verb without its own subject that acts as a clausal subject
+  (synthetic "Write clearly is important.") stays non-finite;
+- a `to`-infinitive with no finite matrix predicate is an infinitival source
+  fragment and stays `NOT_ANALYZABLE`.
+
+The clarification was added on 2026-11-03, before the first CELL pilot label.
+It resolves a case that guideline 1.2 left open and agrees with all existing
+adjudicated labels, so `annotation_guideline_version` stays `1.2`.
+
 ## Data integrity
 
 - `student_id` is pseudonymized. Real student names must not be stored here.

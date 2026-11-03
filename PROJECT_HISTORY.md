@@ -799,3 +799,31 @@ records outside the development split; the holdout remains unopened. No
 threshold, rule, or model was changed, and the report contains no learner
 text.
 
+## Annotation Guideline Clarification: Verbs Without Agreement
+
+### Decision
+
+A base-form predicate verb with its own overt subject, in predicate position,
+without `to` and without a modal or auxiliary carrying finiteness, counts as a
+finite predication in reference labels, even though the learner omitted
+agreement or tense marking. When the parser or Clause Detection treats such a
+verb as non-finite, the sentence is `UNRELIABLE` with `finite_inventory` and
+`nonfinite_inventory`. The rule is written in
+`data/syntax_reliability/README.md`.
+
+### Reason
+
+The case arose on the first CELL pilot sentence and will recur often in learner
+text. Guideline 1.2 did not cover it, and inconsistent handling would distort
+the pilot evaluation of the heuristic.
+
+### Boundaries
+
+The rule was checked against Dataset v1 before adoption. Two adjudicated
+decisions stay unchanged because they fall outside its conditions: a base-form
+clausal subject without its own subject remains non-finite, and a
+`to`-infinitive without a finite matrix predicate remains an infinitival
+source fragment. No CELL pilot label existed yet, so nothing needs
+relabelling, and `annotation_guideline_version` stays 1.2. Public examples are
+synthetic; no learner sentence is quoted.
+
