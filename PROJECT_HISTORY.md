@@ -707,3 +707,24 @@ The 150-word threshold is the existing README guidance, not a validated
 cut-off. The note is a measurement warning, not a judgement about the writing,
 and no metric value or score changes. The field is additive, so
 `ANALYSIS_SCHEMA_VERSION` stays 1.0.
+
+## Command-Line Interface v1
+
+### Decision
+
+`main.py` used to analyze only `essays/sample.txt` and print raw metrics, so
+student and teacher reports and revision comparison were reachable only from
+Python. It now accepts an essay path, `--report metrics|student|teacher`,
+`--compare REVISED_ESSAY`, `--json`, and `--research`. Text formatting moved
+into `src/text_reports.py`, which only formats results built elsewhere, so the
+text and JSON views describe the same data. `main.py` only parses arguments,
+runs the analysis, and prints.
+
+### Boundaries
+
+EFLLex is now opt-in on the command line (`--research`), matching its
+research-only license and the existing `include_research_metrics` option; the
+default metric listing is otherwise unchanged, and with `--research` it is
+identical to the previous demo output. Missing, empty, and non-UTF-8 files fail
+with a short message. `--compare` cannot be combined with `--report`.
+

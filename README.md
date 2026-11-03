@@ -41,7 +41,7 @@ approved by ETS. IELTS is a registered trademark of its respective owners.
              \               /
               src/nlp/pipeline.py   (single shared spaCy pipeline)
 
-  Clients: main.py (CLI demo), src/reporting.py (student/teacher reports),
+  Clients: main.py (CLI), src/reporting.py (student/teacher reports),
            src/revisions.py (revision comparison)
 ```
 
@@ -95,11 +95,19 @@ python3.14 -m venv .venv
 
 ## Usage
 
-Run the demo on `essays/sample.txt`:
+Analyze an essay from the command line (the default file is
+`essays/sample.txt`):
 
 ```text
-.venv/bin/python main.py
+.venv/bin/python main.py                                  # full metric listing
+.venv/bin/python main.py my_essay.txt --report student    # student report
+.venv/bin/python main.py my_essay.txt --report teacher    # teacher report
+.venv/bin/python main.py draft.txt --compare revised.txt  # revision comparison
+.venv/bin/python main.py my_essay.txt --report student --json
 ```
+
+`--json` prints the same result as JSON. EFLLex metrics are added only with
+`--research`, because the EFLLex license is research-only.
 
 Use the engine from code:
 
@@ -183,12 +191,13 @@ Detailed decisions and their reasons are recorded in
 ## Project structure
 
 ```text
-main.py                  CLI demo
+main.py                  command-line interface
 src/analysis.py          application entry point: analyze_writing()
 src/nlp/                 shared spaCy pipeline
 src/lexical/             lexical metrics
 src/syntax/              clauses, complexity, reliability, ML baseline
 src/reporting.py         student and teacher reports
+src/text_reports.py      plain-text views of results and reports
 src/revisions.py         revision comparison
 src/tasks.py             task context
 src/alignment*.py        task-alignment contract, datasets, evaluation

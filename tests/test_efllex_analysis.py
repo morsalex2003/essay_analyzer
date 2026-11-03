@@ -157,7 +157,7 @@ def test_loader_shaped_vocabulary_is_supported():
 def test_main_efllex_output_uses_association_language():
     project_directory = Path(__file__).resolve().parents[1]
     completed_process = subprocess.run(
-        [sys.executable, "main.py"],
+        [sys.executable, "main.py", "--research"],
         cwd=project_directory,
         capture_output=True,
         text=True,
