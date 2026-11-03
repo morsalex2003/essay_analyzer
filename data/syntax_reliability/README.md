@@ -50,7 +50,12 @@ stored in this annotation ledger.
 - `human_manual_review`: a person chose the label directly while viewing the
   parser output, without heuristic verdicts or ML predictions. CELL pilot
   labels made with `scripts/annotate_cell_reliability_pilot.py` use this
-  origin with a pseudonymous `annotator_id`.
+  origin with a pseudonymous `annotator_id` by default.
+
+CELL pilot sessions run with `--model-assisted` record
+`model_assisted_manual_review`: a model suggested each label and the person
+accepted or changed it. Such sessions use their own `annotator_id`, so the
+two kinds of labels stay separable in the ledger and in the evaluation.
 
 Both origins are single-annotator labels unless `adjudication_status` says
 otherwise; neither is independent multi-annotator gold by itself.

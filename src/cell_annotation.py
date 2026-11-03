@@ -28,8 +28,11 @@ ANNOTATION_FIELDS = (
     "annotator_id",
 )
 
-# The annotator chooses each label directly; no model proposes it.
+# human_manual_review: the annotator chooses each label directly.
+# model_assisted_manual_review: a model suggests the label and the annotator
+# accepts or changes it. The session uses one origin for all its labels.
 HUMAN_ANNOTATION_ORIGIN = "human_manual_review"
+MODEL_ASSISTED_ANNOTATION_ORIGIN = "model_assisted_manual_review"
 
 LABEL_KEYS = {
     "r": "RELIABLE",
@@ -125,15 +128,16 @@ def create_annotated_record(
     annotator_id: str,
     binary_mapping: dict[str, object],
     enums: dict[str, list],
+    annotation_origin: str = HUMAN_ANNOTATION_ORIGIN,
 ) -> dict[str, object]:
     """Return a copy of one record with a validated label.
 
     The rules match ``validate_syntax_reliability_dataset.py`` so that the
     pilot ledger can later join the canonical dataset without rework.
     """
-    if HUMAN_ANNOTATION_ORIGIN not in enums["annotation_origin"]:
+    if annotation_origin not in enums["annotation_origin"]:
         raise ValueError(
-            "Dataset schema does not allow " + HUMAN_ANNOTATION_ORIGIN + "."
+            "Dataset schema does not allow " + annotation_origin + "."
         )
 
     if manual_label not in enums["manual_label"]:
@@ -170,7 +174,7 @@ def create_annotated_record(
             annotation_notes = None
 
     record = dict(template_record)
-    record["annotation_origin"] = HUMAN_ANNOTATION_ORIGIN
+    record["annotation_origin"] = annotation_origin
     record["manual_label"] = manual_label
     record["usable_binary_label"] = binary_mapping[manual_label]
     record["abstention_status"] = abstention_status
@@ -352,6 +356,7 @@ def ask_annotation(
     enums,
     input_function,
     print_function,
+    annotation_origin=HUMAN_ANNOTATION_ORIGIN,
 ):
     """Ask for one label. Return a record, or a navigation command."""
     while True:
@@ -403,6 +408,7 @@ def ask_annotation(
         annotator_id,
         binary_mapping,
         enums,
+        annotation_origin,
     )
 
 
@@ -416,6 +422,7 @@ def run_annotation_session(
     input_function=input,
     print_function=print,
     start_position=None,
+    annotation_origin=HUMAN_ANNOTATION_ORIGIN,
 ):
     """Walk through pending sentences and save after every label.
 
@@ -461,6 +468,7 @@ def run_annotation_session(
             enums,
             input_function,
             print_function,
+            annotation_origin,
         )
 
         if result == "q":

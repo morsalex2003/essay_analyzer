@@ -5,6 +5,7 @@ Prints an aggregate JSON report: no learner text. Error lists contain
 ``annotate_cell_reliability_pilot.py --start-at N``.
 """
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -32,7 +33,24 @@ ESSAYS_PATH = PILOT_DIRECTORY / "essays.jsonl"
 SPLIT_PATH = CELL_DIRECTORY / "split_v1.json"
 
 
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        description="Score frozen v1.2 against CELL pilot labels."
+    )
+    parser.add_argument(
+        "--origin",
+        choices=("human_manual_review", "model_assisted_manual_review"),
+        help=(
+            "Score only labels with this annotation_origin; other labels "
+            "are treated as pending."
+        ),
+    )
+    return parser.parse_args()
+
+
 def main():
+    arguments = parse_arguments()
+
     if not PROGRESS_PATH.exists():
         raise SystemExit(
             "No labels yet: run scripts/annotate_cell_reliability_pilot.py "
@@ -52,6 +70,18 @@ def main():
                 "Refusing to evaluate: a pilot record is outside the "
                 "development split."
             )
+
+    if arguments.origin is not None:
+        filtered_records = []
+        for record in records:
+            if (
+                record["manual_label"] is not None
+                and record["annotation_origin"] != arguments.origin
+            ):
+                record = dict(record)
+                record["manual_label"] = None
+            filtered_records.append(record)
+        records = filtered_records
 
     labelled_records = []
     for record in records:

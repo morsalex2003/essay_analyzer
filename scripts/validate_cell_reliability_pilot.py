@@ -70,7 +70,10 @@ def main() -> None:
         if manual_label is None:
             assert annotation["usable_binary_label"] is None
         else:
-            assert annotation["annotation_origin"] == "human_manual_review"
+            assert annotation["annotation_origin"] in (
+                "human_manual_review",
+                "model_assisted_manual_review",
+            )
             assert manual_label in schema["allowed_manual_labels"]
             assert annotation["usable_binary_label"] == (
                 schema["binary_mapping"][manual_label]

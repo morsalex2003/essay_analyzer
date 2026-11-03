@@ -16,6 +16,8 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT))
 
 from src.cell_annotation import (  # noqa: E402
+    HUMAN_ANNOTATION_ORIGIN,
+    MODEL_ASSISTED_ANNOTATION_ORIGIN,
     SentenceParser,
     label_counts,
     load_annotation_enums,
@@ -65,7 +67,17 @@ def parse_arguments():
         required=True,
         help=(
             "Pseudonymous annotator ID stored with each label (never a "
-            "real name). Labels are recorded as human_manual_review."
+            "real name). Labels are recorded as human_manual_review "
+            "unless --model-assisted is given."
+        ),
+    )
+    parser.add_argument(
+        "--model-assisted",
+        action="store_true",
+        help=(
+            "Record this session's labels as model_assisted_manual_review: "
+            "a model suggested each label and the annotator reviewed it. "
+            "Use a separate --annotator-id for such sessions."
         ),
     )
     parser.add_argument(
@@ -142,6 +154,11 @@ def main():
     for essay in load_jsonl(ESSAYS_PATH):
         essays_by_id[essay["essay_id"]] = essay
 
+    annotation_origin = HUMAN_ANNOTATION_ORIGIN
+    if arguments.model_assisted:
+        annotation_origin = MODEL_ASSISTED_ANNOTATION_ORIGIN
+    print("Labels in this session are recorded as " + annotation_origin + ".")
+
     saved_count = run_annotation_session(
         records,
         SentenceParser(nlp, essays_by_id),
@@ -153,6 +170,7 @@ def main():
             current_records,
         ),
         start_position=start_position,
+        annotation_origin=annotation_origin,
     )
 
     print("")

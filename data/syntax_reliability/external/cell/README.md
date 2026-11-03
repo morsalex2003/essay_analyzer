@@ -91,3 +91,15 @@ selection structure, and the ledger positions of misses and false warnings.
 It contains no learner text. `status` is `partial` until all 420 sentences are
 labelled. The pilot uses development students only, so its results are
 development estimates, not holdout evaluation.
+
+Labelling with model suggestions is recorded honestly as a separate origin:
+
+```text
+python scripts/annotate_cell_reliability_pilot.py \
+    --annotator-id owner_model_assisted_v1 --model-assisted
+```
+
+Every label from such a session is `model_assisted_manual_review`. The
+evaluation report counts labels by origin, and
+`evaluate_cell_reliability_pilot.py --origin human_manual_review` (or
+`model_assisted_manual_review`) scores one kind only.

@@ -261,3 +261,55 @@ def test_merge_progress_accepts_human_origin_on_labelled_records():
 
     assert merged[0]["annotation_origin"] == "human_manual_review"
     assert merged[1]["annotation_origin"] == "model_assisted_manual_review"
+
+
+def test_model_assisted_origin_is_recorded_when_requested():
+    record = create_annotated_record(
+        _template_records()[0],
+        "RELIABLE",
+        [],
+        "none",
+        None,
+        "owner_model_assisted_v1",
+        BINARY_MAPPING,
+        ENUMS,
+        annotation_origin="model_assisted_manual_review",
+    )
+
+    assert record["annotation_origin"] == "model_assisted_manual_review"
+
+
+def test_unknown_annotation_origin_is_rejected():
+    with pytest.raises(ValueError, match="does not allow"):
+        create_annotated_record(
+            _template_records()[0],
+            "RELIABLE",
+            [],
+            "none",
+            None,
+            "annotator_01",
+            BINARY_MAPPING,
+            ENUMS,
+            annotation_origin="guessed",
+        )
+
+
+def test_session_uses_one_origin_for_every_label():
+    records = _template_records()
+
+    run_annotation_session(
+        records,
+        _parser(),
+        "owner_model_assisted_v1",
+        BINARY_MAPPING,
+        ENUMS,
+        lambda current: None,
+        input_function=_scripted_input(["r", "", "m", "", "", "q"]),
+        print_function=lambda *parts: None,
+        annotation_origin="model_assisted_manual_review",
+    )
+
+    assert records[0]["annotation_origin"] == "model_assisted_manual_review"
+    assert records[1]["annotation_origin"] == "model_assisted_manual_review"
+    assert records[2]["annotation_origin"] == "model_assisted_manual_review"
+    assert records[2]["manual_label"] is None

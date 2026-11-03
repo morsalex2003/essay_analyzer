@@ -827,3 +827,22 @@ source fragment. No CELL pilot label existed yet, so nothing needs
 relabelling, and `annotation_guideline_version` stays 1.2. Public examples are
 synthetic; no learner sentence is quoted.
 
+## CELL Pilot Model-Assisted Labelling Option
+
+### Decision
+
+The dataset owner chose to label the CELL pilot with model suggestions. The
+annotation tool gained `--model-assisted`, which records every label of that
+session as `model_assisted_manual_review` instead of `human_manual_review`;
+such sessions use a separate `annotator_id`. The pilot validator accepts both
+origins, and `evaluate_cell_reliability_pilot.py --origin ...` scores one
+kind of label at a time.
+
+### Boundaries
+
+The origin is fixed per session, so one label never mixes the two processes.
+Model-assisted pilot labels have the same status as Dataset v1 labels:
+provisional reference annotations, not independent human gold, and the
+evaluation report must state their origin counts. No label existed when the
+option was added.
+
