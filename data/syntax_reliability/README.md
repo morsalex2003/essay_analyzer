@@ -42,6 +42,19 @@ subset. `usable_binary_label` remains a provisional ML target.
 Syntax Reliability heuristic predictions are not reference labels and are not
 stored in this annotation ledger.
 
+`annotation_origin` separates two ways a label was produced:
+
+- `model_assisted_manual_review`: a model proposed the label and a person
+  reviewed it. All Dataset v1 labels use this origin with
+  `annotator_id = "codex_review_v1"`.
+- `human_manual_review`: a person chose the label directly while viewing the
+  parser output, without heuristic verdicts or ML predictions. CELL pilot
+  labels made with `scripts/annotate_cell_reliability_pilot.py` use this
+  origin with a pseudonymous `annotator_id`.
+
+Both origins are single-annotator labels unless `adjudication_status` says
+otherwise; neither is independent multi-annotator gold by itself.
+
 ## Annotation guidelines
 
 - `original_text` is the exact written learner text. Annotation must not

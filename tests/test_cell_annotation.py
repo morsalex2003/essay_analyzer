@@ -66,6 +66,7 @@ def _template_records():
                 "annotation_notes": None,
                 "annotator_id": None,
                 "adjudication_status": "single",
+                "annotation_origin": "model_assisted_manual_review",
             }
         )
 
@@ -109,7 +110,9 @@ def test_annotated_record_sets_binary_label_and_keeps_template():
     assert record["manual_failure_types"] == ["matrix_hierarchy"]
     assert record["abstention_status"] == "none"
     assert record["annotator_id"] == "annotator_01"
+    assert record["annotation_origin"] == "human_manual_review"
     assert template["manual_label"] is None
+    assert template["annotation_origin"] == "model_assisted_manual_review"
 
 
 def test_not_analyzable_needs_reason_and_records_failure_type():
@@ -228,3 +231,33 @@ def test_session_skip_leaves_sentence_pending_and_back_relabels():
 
     assert records[0]["manual_label"] is None
     assert records[1]["manual_label"] == "MOSTLY_RELIABLE"
+
+
+def test_schema_without_human_origin_is_rejected():
+    enums_without_human_origin = dict(ENUMS)
+    enums_without_human_origin["annotation_origin"] = [
+        "model_assisted_manual_review"
+    ]
+
+    with pytest.raises(ValueError, match="human_manual_review"):
+        create_annotated_record(
+            _template_records()[0],
+            "RELIABLE",
+            [],
+            "none",
+            None,
+            "annotator_01",
+            BINARY_MAPPING,
+            enums_without_human_origin,
+        )
+
+
+def test_merge_progress_accepts_human_origin_on_labelled_records():
+    template = _template_records()
+    progress = [dict(record) for record in template]
+    progress[0] = _annotate(progress[0], "RELIABLE")
+
+    merged = merge_progress(template, progress)
+
+    assert merged[0]["annotation_origin"] == "human_manual_review"
+    assert merged[1]["annotation_origin"] == "model_assisted_manual_review"

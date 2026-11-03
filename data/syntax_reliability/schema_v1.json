@@ -44,7 +44,8 @@
       "adjudicated"
     ],
     "annotation_origin": [
-      "model_assisted_manual_review"
+      "model_assisted_manual_review",
+      "human_manual_review"
     ],
     "data_status": [
       "development",
@@ -136,8 +137,8 @@
       "abstention_status": "Reason an item is excluded from the binary task; none for analyzable labels.",
       "manual_failure_types": "Controlled, possibly multi-valued reason codes used only as annotation metadata.",
       "annotation_notes": "Explanation produced during model-assisted review; not an ML feature.",
-      "annotation_origin": "Transparent provenance category for the annotation process.",
-      "annotator_id": "Transparent identifier for the model-assisted review process, not a human identity.",
+      "annotation_origin": "Transparent provenance category for the annotation process: model_assisted_manual_review when a model proposed the label and a person reviewed it, human_manual_review when a person chose the label directly while viewing the parser output.",
+      "annotator_id": "For model_assisted_manual_review, a transparent identifier for the model-assisted review process; for human_manual_review, a pseudonymous annotator identifier. Never a real name.",
       "adjudication_status": "Whether the record is single-reviewed, agreed, or human-adjudicated.",
       "adjudicator_id": "Required for adjudicated records; transparent identifier for the human dataset owner.",
       "adjudication_date": "Required ISO date for adjudicated records.",

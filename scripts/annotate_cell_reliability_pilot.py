@@ -63,7 +63,10 @@ def parse_arguments():
     parser.add_argument(
         "--annotator-id",
         required=True,
-        help="Pseudonymous annotator ID stored with each label.",
+        help=(
+            "Pseudonymous annotator ID stored with each label (never a "
+            "real name). Labels are recorded as human_manual_review."
+        ),
     )
     parser.add_argument(
         "--start-at",

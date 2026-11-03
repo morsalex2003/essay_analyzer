@@ -19,6 +19,7 @@ from src.syntax.clauses import detect_clauses
 # Fields that the annotator may change. Every other template field is frozen
 # provenance and must stay identical in the progress ledger.
 ANNOTATION_FIELDS = (
+    "annotation_origin",
     "manual_label",
     "usable_binary_label",
     "abstention_status",
@@ -26,6 +27,9 @@ ANNOTATION_FIELDS = (
     "annotation_notes",
     "annotator_id",
 )
+
+# The annotator chooses each label directly; no model proposes it.
+HUMAN_ANNOTATION_ORIGIN = "human_manual_review"
 
 LABEL_KEYS = {
     "r": "RELIABLE",
@@ -72,6 +76,7 @@ def load_annotation_enums(schema: dict[str, object]) -> dict[str, list]:
         "manual_label": list(enums["manual_label"]),
         "abstention_status": list(enums["abstention_status"]),
         "manual_failure_type": list(enums["manual_failure_type"]),
+        "annotation_origin": list(enums["annotation_origin"]),
     }
 
 
@@ -126,6 +131,11 @@ def create_annotated_record(
     The rules match ``validate_syntax_reliability_dataset.py`` so that the
     pilot ledger can later join the canonical dataset without rework.
     """
+    if HUMAN_ANNOTATION_ORIGIN not in enums["annotation_origin"]:
+        raise ValueError(
+            "Dataset schema does not allow " + HUMAN_ANNOTATION_ORIGIN + "."
+        )
+
     if manual_label not in enums["manual_label"]:
         raise ValueError("Unsupported manual_label.")
 
@@ -160,6 +170,7 @@ def create_annotated_record(
             annotation_notes = None
 
     record = dict(template_record)
+    record["annotation_origin"] = HUMAN_ANNOTATION_ORIGIN
     record["manual_label"] = manual_label
     record["usable_binary_label"] = binary_mapping[manual_label]
     record["abstention_status"] = abstention_status

@@ -751,3 +751,26 @@ provenance. `annotation_origin` keeps the template value
 `model_assisted_manual_review`; the schema has no separate value for direct
 human annotation yet. The holdout remains unopened.
 
+## Human Annotation Origin v1
+
+### Decision
+
+Added `human_manual_review` to the `annotation_origin` enum in
+`data/syntax_reliability/schema_v1.json`. It marks labels that a person chose
+directly while viewing parser output, as opposed to
+`model_assisted_manual_review`, where a model proposed the label and a person
+reviewed it. The CELL pilot annotation tool now records
+`human_manual_review` on every label it saves and refuses to run against a
+schema without that value; the pilot validator requires it on labelled
+records. This supersedes the open point in Annotation Tool v1.
+
+### Boundaries
+
+The decision was made before any CELL pilot label existed, so no record needs
+relabelling. Dataset v1 is unchanged: its 232 labels stay
+`model_assisted_manual_review` / `codex_review_v1`, and its validator still
+requires exactly that. The enum change is additive, so record
+`schema_version` stays 1.0. Pending template records keep the template origin
+until they are labelled. A single human annotator is still not
+multi-annotator gold.
+
