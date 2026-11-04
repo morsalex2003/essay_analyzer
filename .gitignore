@@ -20,6 +20,7 @@ __pycache__/
 data/syntax_reliability/essays_v1.jsonl
 data/syntax_reliability/annotations_v1.jsonl
 data/syntax_reliability/local/corpus_a_reference_v1.jsonl
+data/syntax_reliability/local/development_set_v1_lock.json
 
 # Private local CELL corpus, source manifest, and learner text
 data/syntax_reliability/external/cell/local/

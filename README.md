@@ -176,6 +176,16 @@ student-level split of the CELL corpus (seed 20260824; 393 development and 98
 untouched holdout students) was frozen for future work; the holdout has not
 been opened.
 
+**Development set for Reliability ML v2.** Dataset v1 and the labelled CELL
+pilot are frozen together as `reliability_development_v1`: 37 students, 63
+essays, 652 sentences (504 usable, 102 unreliable, 46 not analyzable). The
+public manifest `data/syntax_reliability/development_set_v1.json` holds
+aggregate counts, per-student status, known limitations, and the ML v2
+evaluation procedure fixed in advance (student-grouped cross-validation on
+essay-context parses, compared with frozen v1.2). A private local lock stores
+the hash of every source file; check it with
+`python scripts/validate_reliability_development_set.py`.
+
 **Reference annotations.** Existing sentence-level reliability labels are
 provisional model-assisted reference annotations, not independent human gold.
 

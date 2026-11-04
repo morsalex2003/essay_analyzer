@@ -982,3 +982,54 @@ or labels such as "Revision:"; five wrong boundaries were removed. The
 Dataset v1 essays are segmented exactly as before. The rules were designed on
 pilot development essays.
 
+## Reliability Development Set v1
+
+### Decision
+
+Froze the development data for Reliability ML v2 as
+`reliability_development_v1`: Dataset v1 (2 students, 28 essays, 232
+sentences) and the labelled CELL Reliability Pilot v1 (35 students, 35
+essays, 420 sentences). Totals: 37 students, 63 essays, 652 sentences; 504
+usable, 102 `UNRELIABLE`, and 46 `NOT_ANALYZABLE` excluded from the binary
+target. Both batches share spaCy 3.8.13 with en_core_web_sm 3.8.0, Clause
+Detection v2.1, and sentence segmentation v1; every labelled sentence is
+reproduced by segmenting its complete essay with the frozen pipeline.
+
+The tracked manifest `data/syntax_reliability/development_set_v1.json`
+follows the public-safe batch manifest design of the data expansion protocol:
+aggregate counts, one status record per student, exclusions, and known
+limitations, with no text, sentence labels, hashes, or paths. A private
+ignored lock stores the SHA-256 and record count of each source file. The
+validator rebuilds the manifest from the local files and fails if a file, a
+count, a student, or the essay-context alignment changes, or if a holdout
+student appears.
+
+### ML v2 evaluation procedure, fixed before development
+
+- Target: `UNRELIABLE` positive; `RELIABLE` and `MOSTLY_RELIABLE` negative;
+  `NOT_ANALYZABLE` excluded.
+- Parse context: each sentence comes from the frozen pipeline's parse of its
+  complete essay, because labels were judged on those spans. Reliability ML
+  v1 parsed Dataset v1 sentences in isolation, so its numbers are not
+  directly comparable.
+- Cross-validation grouped by student (`StratifiedGroupKFold`, 5 folds, or
+  4 or 3 if a fold would lack a class; shuffle, seed 42), stricter than the
+  essay grouping of ML v1.
+- Threshold 0.5 unless chosen inside training folds only.
+- Metrics: precision, recall, F1, F2, balanced accuracy, and average
+  precision, with Wilson 95% intervals for precision and recall, reported
+  overall and by batch, against frozen v1.2 `warning` on the same parses.
+- The untouched CELL holdout is evaluated once, after the model, features,
+  threshold, and this procedure are frozen.
+
+### Boundaries
+
+Excluded: Corpus A (different annotation history, not used by ML v1), the
+CELL holdout, and unlabelled CELL development students. Known limitations
+recorded in the manifest: labels are model-assisted rather than blind human
+gold; 222 model `RELIABLE` pilot labels are unreviewed; Dataset v1 has two
+students, one with 21 of 28 essays; Dataset v1 used annotation guideline 1.0;
+labels are tied to Clause Detection v2.1 and segmentation v1; and the pilot
+already shaped Clause Detection v2.2 and segmentation v2. No model was
+trained and the holdout remains unopened.
+

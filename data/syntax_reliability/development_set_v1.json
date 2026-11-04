@@ -1,0 +1,978 @@
+{
+  "manifest_version": "1.0",
+  "development_set_id": "reliability_development_v1",
+  "frozen_at": "2026-11-04",
+  "data_role": "development",
+  "holdout_opened": false,
+  "batches": [
+    {
+      "batch_id": "syntax_reliability_dataset_v1",
+      "source_stages": [
+        "v11_dev7",
+        "v11_holdout9",
+        "v12_holdout12"
+      ],
+      "counts": {
+        "students": 2,
+        "essays": 28,
+        "sentences": 232
+      },
+      "label_counts": {
+        "RELIABLE": 164,
+        "MOSTLY_RELIABLE": 14,
+        "UNRELIABLE": 43,
+        "NOT_ANALYZABLE": 11
+      },
+      "binary_counts": {
+        "usable": 178,
+        "unreliable": 43,
+        "excluded_not_analyzable": 11
+      },
+      "annotation": {
+        "guideline_versions": [
+          "1.0"
+        ],
+        "origins": {
+          "model_assisted_manual_review": 232
+        },
+        "annotator_ids": [
+          "codex_review_v1"
+        ],
+        "adjudicated": 51
+      },
+      "provenance": {
+        "spacy_version": "3.8.13",
+        "spacy_model_name": "en_core_web_sm",
+        "spacy_model_version": "3.8.0",
+        "clause_detector_version": "2.1",
+        "reliability_versions": [
+          "1.1",
+          "1.2"
+        ],
+        "sentence_segmentation_version": "1"
+      }
+    },
+    {
+      "batch_id": "cell_reliability_pilot_v1",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "counts": {
+        "students": 35,
+        "essays": 35,
+        "sentences": 420
+      },
+      "label_counts": {
+        "RELIABLE": 270,
+        "MOSTLY_RELIABLE": 56,
+        "UNRELIABLE": 59,
+        "NOT_ANALYZABLE": 35
+      },
+      "binary_counts": {
+        "usable": 326,
+        "unreliable": 59,
+        "excluded_not_analyzable": 35
+      },
+      "annotation": {
+        "guideline_versions": [
+          "1.2"
+        ],
+        "origins": {
+          "model_assisted_manual_review": 420
+        },
+        "annotator_ids": [
+          "claude_review_v1",
+          "owner_model_assisted_v1"
+        ],
+        "adjudicated": 178
+      },
+      "provenance": {
+        "spacy_version": "3.8.13",
+        "spacy_model_name": "en_core_web_sm",
+        "spacy_model_version": "3.8.0",
+        "clause_detector_version": "2.1",
+        "reliability_versions": [
+          "1.2"
+        ],
+        "sentence_segmentation_version": "1"
+      }
+    }
+  ],
+  "totals": {
+    "counts": {
+      "students": 37,
+      "essays": 63,
+      "sentences": 652
+    },
+    "label_counts": {
+      "RELIABLE": 434,
+      "MOSTLY_RELIABLE": 70,
+      "UNRELIABLE": 102,
+      "NOT_ANALYZABLE": 46
+    },
+    "binary_counts": {
+      "usable": 504,
+      "unreliable": 102,
+      "excluded_not_analyzable": 46
+    }
+  },
+  "students": [
+    {
+      "manifest_version": "1.0",
+      "batch_id": "syntax_reliability_dataset_v1",
+      "student_id": "student_m",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-17",
+      "source_stages": [
+        "v11_dev7"
+      ],
+      "essay_count": 7,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "not_recorded",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "syntax_reliability_dataset_v1",
+      "student_id": "student_v",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-17",
+      "source_stages": [
+        "v11_holdout9",
+        "v12_holdout12"
+      ],
+      "essay_count": 21,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "not_recorded",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000105",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000114",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s000015",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000165",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s00001797",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s00001940",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s00001949",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s00002021",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s00002065",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s00002093",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s00002100",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s00002447",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s00002487",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s00002525",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000256",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s00002631",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000272",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s00002780",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000285",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000316",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000333",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000402",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000443",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000444",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s000048",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000507",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000527",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000529",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000706",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000716",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000839",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000841",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000879",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000880",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    },
+    {
+      "manifest_version": "1.0",
+      "batch_id": "cell_reliability_pilot_v1",
+      "student_id": "s0000926",
+      "data_role": "development",
+      "role_assigned_at": "2026-08-24",
+      "source_stages": [
+        "cell_reliability_pilot_v1"
+      ],
+      "essay_count": 1,
+      "task_types": [
+        "unrecorded"
+      ],
+      "collection_status": "complete",
+      "annotation_status": "frozen",
+      "freeze_status": "annotation_frozen",
+      "raw_git_status": "ignored_untracked",
+      "duplicate_audit_status": "complete",
+      "holdout_opened_at": null,
+      "holdout_open_reason": null
+    }
+  ],
+  "exclusions": [
+    {
+      "name": "corpus_a_reference_v1",
+      "reason": "auxiliary development evidence with a different annotation history; excluded from ML v1 and kept out for comparability"
+    },
+    {
+      "name": "cell_untouched_holdout",
+      "reason": "reserved for the final ML v2 evaluation"
+    },
+    {
+      "name": "cell_unannotated_development",
+      "reason": "development students without labels"
+    }
+  ],
+  "ml_v2_evaluation_protocol": {
+    "target": {
+      "positive": [
+        "UNRELIABLE"
+      ],
+      "negative": [
+        "RELIABLE",
+        "MOSTLY_RELIABLE"
+      ],
+      "excluded": [
+        "NOT_ANALYZABLE"
+      ]
+    },
+    "parse_context": "essay: each labelled sentence is taken from the frozen pipeline's parse of its complete essay (sentence segmentation v1), because labels were judged on those sentence spans",
+    "cross_validation": {
+      "splitter": "StratifiedGroupKFold",
+      "group": "student_id",
+      "fold_candidates": [
+        5,
+        4,
+        3
+      ],
+      "fold_rule": "first candidate that puts both classes in every fold",
+      "shuffle": true,
+      "random_state": 42
+    },
+    "threshold": "0.5 unless chosen inside training folds only; never tuned on out-of-fold predictions",
+    "metrics": [
+      "precision",
+      "recall",
+      "f1",
+      "f2",
+      "balanced_accuracy",
+      "average_precision"
+    ],
+    "confidence_intervals": "Wilson 95% for precision and recall",
+    "baseline": "frozen Syntax Reliability v1.2 warning (medium or low) on the same essay-context parses",
+    "breakdowns": [
+      "batch_id"
+    ],
+    "forbidden_features": [
+      "student_id",
+      "essay_id",
+      "batch_id",
+      "source_stage",
+      "data_role",
+      "annotation fields"
+    ],
+    "final_evaluation": "untouched CELL holdout, only after model, features, threshold, and this procedure are frozen"
+  },
+  "known_limitations": [
+    "Labels are model-assisted reference annotations, not blind human gold.",
+    "222 model RELIABLE labels in the CELL pilot are unreviewed; a seeded sample of 40 changed 3 to MOSTLY_RELIABLE, which keeps the binary target.",
+    "Dataset v1 has two students; student_v contributes 21 of 28 essays, so one student-grouped fold is dominated by one author.",
+    "Dataset v1 was labelled under annotation guideline 1.0; the 1.2 clarifications from the CELL pilot review were not re-applied to it.",
+    "Labels were judged against Clause Detection v2.1 and sentence segmentation v1; they do not transfer to v2.2 or segmentation v2 without re-judging.",
+    "The CELL pilot was used for the v1.2 error analysis and to design Clause Detection v2.2 and sentence segmentation v2, so it is not independent of those components."
+  ],
+  "privacy": {
+    "learner_text_in_manifest": false,
+    "sentence_labels_in_manifest": false,
+    "hashes_in_manifest": false,
+    "private_paths_in_manifest": false,
+    "raw_git_status": "ignored_untracked"
+  }
+}

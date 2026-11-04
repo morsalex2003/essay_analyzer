@@ -156,3 +156,12 @@ No train, development, or test split is defined in Dataset v1.
 - `schema_v1.json`: fields, enum values, nullability, and label semantics.
 - `../../scripts/validate_syntax_reliability_dataset.py`: integrity checks and
   frozen Corpus D totals.
+- `development_set_v1.json`: public-safe manifest of the frozen ML v2
+  development set (Dataset v1 plus the labelled CELL pilot), with aggregate
+  counts, per-student status records, exclusions, known limitations, and the
+  ML v2 evaluation procedure. It contains no text, sentence labels, hashes,
+  or paths.
+- `local/development_set_v1_lock.json`: private, ignored SHA-256 lock of the
+  frozen source files, written by
+  `../../scripts/freeze_reliability_development_set.py` and checked by
+  `../../scripts/validate_reliability_development_set.py`.
