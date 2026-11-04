@@ -4,6 +4,7 @@ from src.syntax.clauses import (
     AUXILIARY_DEPENDENCIES,
     NON_FINITE_VERB_FORMS,
     SUBJECT_DEPENDENCIES,
+    frozen_clause_summary,
 )
 from src.syntax.complexity import (
     _calculate_dependency_tree_depths,
@@ -391,10 +392,12 @@ def extract_reliability_features(
 ) -> dict[str, int | float]:
     """Extract deterministic numeric features from a prepared sentence.
 
-    The caller supplies an existing spaCy parse and its Clause Detection v2.1
-    summary. The extractor does not run NLP, read labels, or use the final
-    Syntax Reliability verdict.
+    The caller supplies an existing spaCy parse and its Clause Detection
+    summary. Feature schema v1 is frozen on Clause Detection v2.1, so a newer
+    summary is recomputed with the v2.1 rules. The extractor does not run
+    NLP, read labels, or use the final Syntax Reliability verdict.
     """
+    clause_summary = frozen_clause_summary(sentence, clause_summary)
     features = _extract_structural_features(sentence, clause_summary)
 
     if include_heuristic_signals:

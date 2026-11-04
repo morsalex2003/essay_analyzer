@@ -44,6 +44,7 @@ from src.syntax.reliability_features import (  # noqa: E402
 
 
 SOURCE_STAGE = "cell_reliability_pilot_v1"
+# Pilot v1 selection is frozen on Clause Detection v2.1.
 CLAUSE_DETECTOR_VERSION = "2.1"
 RELIABILITY_GUIDELINE_VERSION = "1.2"
 
@@ -148,7 +149,10 @@ def main() -> None:
             )
             text_by_record_id[record.record_id] = learner_text
             document = nlp(learner_text)
-            clause_summary = detect_clauses(document)
+            clause_summary = detect_clauses(
+                document,
+                detector_version=CLAUSE_DETECTOR_VERSION,
+            )
             candidates = []
             for sentence_index, sentence in enumerate(document.sents, start=1):
                 features = extract_reliability_features(

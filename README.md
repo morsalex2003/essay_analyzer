@@ -59,9 +59,10 @@ One spaCy `Doc` is created per text and reused by every component.
 
 **Syntax**
 - Sentence length statistics, dependency distance, and tree depth.
-- Clause Detection v2: finite clauses, dependent finite clauses, and
+- Clause Detection v2.2: finite clauses, dependent finite clauses, and
   non-finite predicative units are counted separately. Coordinated predicates
-  sharing a subject are not counted as separate clauses.
+  sharing a subject are not counted as separate clauses. Frozen components
+  (Syntax Reliability v1.2, Reliability ML v1, CELL pilot v1) keep v2.1.
 - Clause density, dependent clause ratio, and sentence-level subordination
   ratio based on finite dependent clauses only.
 
@@ -148,7 +149,11 @@ proxy, which mixed infinitives and participles with finite clauses and
 over-counted shared-subject coordination. Clause Detection v2 uses subject
 evidence, finiteness, and dependency topology, with conservative refinements
 for learner English (finite parataxis, infinitive-marker precedence, non-finite
-`pcomp`).
+`pcomp`). v2.2 also counts a verb as finite when a modal is attached to the
+next auxiliary ("should" -> "have"), when a past tense with its own subject is
+tagged as a participle, and when a base-form verb has its own subject without
+"to" or an auxiliary (learner agreement errors), except bare infinitives after
+verbs such as "make" or "let".
 
 **Syntax reliability ML baseline (development estimates only).** Canonical
 development data: 221 analyzable sentences from 28 essays (178 usable, 43

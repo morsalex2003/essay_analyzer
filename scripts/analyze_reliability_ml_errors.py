@@ -114,7 +114,8 @@ def _head_names(clause_summary: dict[str, object], key: str) -> str:
 
 def _parse_summary(annotation: dict[str, object]) -> dict[str, str]:
     document = nlp(annotation["original_text"])
-    clause_summary = detect_clauses(document)
+    # Reliability ML v1 is frozen on Clause Detection v2.1.
+    clause_summary = detect_clauses(document, detector_version="2.1")
     root = None
 
     for token in document:

@@ -68,6 +68,7 @@ def _template_records():
                 "annotator_id": None,
                 "adjudication_status": "single",
                 "annotation_origin": "model_assisted_manual_review",
+                "clause_detector_version": "2.1",
             }
         )
 

@@ -2,7 +2,8 @@ import pytest
 from spacy.tokens import Doc
 
 from src.nlp.pipeline import nlp
-from src.syntax.clauses import detect_clauses
+from src.syntax.clauses import detect_clauses, frozen_clause_summary
+from src.syntax.reliability import assess_sentence_reliability
 
 
 APPROVED_SENTENCES = (
@@ -435,9 +436,98 @@ def test_empty_document_returns_empty_summary():
     clause_summary = detect_clauses(nlp(""))
 
     assert clause_summary == {
+        "detector_version": "2.2",
         "finite_clause_heads": [],
         "dependent_clause_heads": [],
         "non_finite_heads": [],
         "unknown_heads": [],
         "sentences_with_finite_subordination": set(),
     }
+
+
+def _texts(clause_summary, key):
+    texts = []
+    for token in clause_summary[key]:
+        texts.append(token.text)
+
+    return texts
+
+
+V22_CHANGES = (
+    # Rule A: the parser attached "should" to "have", not to "prepared".
+    (
+        "Nurses should have prepared patients very carefully before "
+        "letting patients leave any rooms.",
+        "prepared",
+    ),
+    # Rule B: past tense with its own subject, tagged as a participle.
+    (
+        "Children master these skills at an earlier age than Piaget "
+        "suspected.",
+        "suspected",
+    ),
+    # Rule C: base-form verb with its own subject in a that-clause.
+    (
+        "The main finding was that learners progress through the stages "
+        "at different rates.",
+        "progress",
+    ),
+)
+
+
+@pytest.mark.parametrize("text, head", V22_CHANGES)
+def test_v22_counts_finite_heads_that_v21_missed(text, head):
+    document = nlp(text)
+    v21 = detect_clauses(document, detector_version="2.1")
+    v22 = detect_clauses(document)
+
+    assert head not in _texts(v21, "finite_clause_heads")
+    assert head in _texts(v22, "finite_clause_heads")
+    assert head not in _texts(v22, "non_finite_heads")
+    assert v22["detector_version"] == "2.2"
+    assert v21["detector_version"] == "2.1"
+
+
+@pytest.mark.parametrize(
+    "text, head",
+    (
+        ("The teacher made us write the answers.", "write"),
+        ("She let the students leave early.", "leave"),
+        # A reduced participle without its own subject stays non-finite.
+        ("The test was harder than the teacher suspected.", "suspected"),
+    ),
+)
+def test_v22_keeps_bare_infinitives_and_participles_non_finite(text, head):
+    clause_summary = detect_clauses(nlp(text))
+
+    assert head in _texts(clause_summary, "non_finite_heads")
+    assert head not in _texts(clause_summary, "finite_clause_heads")
+
+
+def test_unsupported_detector_version_is_rejected():
+    with pytest.raises(ValueError, match="Unsupported"):
+        detect_clauses(nlp("I work."), detector_version="3.0")
+
+
+def test_frozen_summary_reuses_v21_and_recomputes_newer_summaries():
+    document = nlp(V22_CHANGES[2][0])
+    v21 = detect_clauses(document, detector_version="2.1")
+    v22 = detect_clauses(document)
+
+    assert frozen_clause_summary(document, v21) is v21
+    recomputed = frozen_clause_summary(document, v22)
+    assert recomputed["detector_version"] == "2.1"
+    assert _texts(recomputed, "non_finite_heads") == ["progress"]
+
+
+@pytest.mark.parametrize("text, head", V22_CHANGES)
+def test_frozen_reliability_heuristic_ignores_the_detector_upgrade(text, head):
+    document = nlp(text)
+
+    assert assess_sentence_reliability(
+        document,
+        detect_clauses(document),
+    ) == assess_sentence_reliability(
+        document,
+        detect_clauses(document, detector_version="2.1"),
+    )

@@ -363,7 +363,11 @@ def format_sentence_view(record, sentence, sentences) -> str:
             + head_text
         )
 
-    clauses = detect_clauses(sentence)
+    # Show the clause analysis the record was prepared and labelled with.
+    clauses = detect_clauses(
+        sentence,
+        detector_version=record["clause_detector_version"],
+    )
     lines.append("")
     for label, field_name in (
         ("finite clause heads:   ", "finite_clause_heads"),

@@ -895,3 +895,39 @@ model `RELIABLE` labels remain unreviewed; the sample suggests some should be
 sentences in isolation, so its numbers are not directly comparable. No rule,
 threshold, or model was changed.
 
+## Clause Detection v2.2
+
+### Decision
+
+The CELL pilot review showed Clause Detection v2.1 classifying some finite
+predicates as non-finite even when the spaCy parse was usable. v2.2 counts a
+verb as finite when (A) a modal is attached to the next auxiliary instead of
+the main verb ("should" -> "have" in "should have prepared"), (B) a VBN-tagged
+verb has an active subject and no auxiliary (a past tense mis-tagged as a
+participle, "than Piaget suspected"), or (C) a base-form verb has an active
+subject, no "to", and no auxiliary, unless it follows a bare-infinitive
+governor such as "make", "let", "help", or "see". Rule C implements the
+guideline clarification on verbs without agreement. `detect_clauses()` takes
+`detector_version` (default "2.2") and records it in the summary.
+
+### Boundaries
+
+Syntax Reliability v1.2 and Reliability ML feature schema v1 are frozen on
+v2.1: given a newer summary, they recompute a v2.1 summary from the same parse
+(`frozen_clause_summary()`). Without this, rule C would silence the v1.2
+`no_finite_clause` and `nonfinite_root_with_subject` signals, which fire on
+the old misclassification. After the change the Reliability ML v1 baseline,
+the frozen v1.2 warning baseline, and the CELL pilot evaluation reproduce
+their recorded numbers exactly. The CELL pilot tool shows the detector version
+stamped on each record (v2.1), and pilot preparation and ML error analysis
+stay on v2.1.
+
+On the CELL pilot, v2.2 changes the clause inventory of exactly four
+sentences, all `UNRELIABLE` under v2.1; on Dataset v1, rules A and B change
+nothing and rule C changes four `UNRELIABLE` sentences, two of them corrected
+and two already-broken parses whose error changes form. No `RELIABLE` or
+`MOSTLY_RELIABLE` sentence changes. Reference labels stay tied to v2.1 through
+`clause_detector_version`; a v2.2 evaluation needs labels judged against v2.2
+output. The rules were designed on development data and are not independent
+validation.
+

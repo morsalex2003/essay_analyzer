@@ -1,6 +1,6 @@
 from spacy.tokens import Doc, Span, Token
 
-from src.syntax.clauses import SUBJECT_DEPENDENCIES
+from src.syntax.clauses import SUBJECT_DEPENDENCIES, frozen_clause_summary
 
 
 # These are provisional engineering thresholds, not empirically validated
@@ -972,6 +972,8 @@ def detect_reliability_flags(
     clause_summary: dict[str, object],
 ) -> list[str]:
     """Return structural warnings without assigning a reliability category."""
+    # Syntax Reliability v1.2 is frozen on Clause Detection v2.1.
+    clause_summary = frozen_clause_summary(sentence, clause_summary)
     flags = []
     finite_heads = _heads_in_sentence(
         sentence,
@@ -1095,6 +1097,7 @@ def assess_sentence_reliability(
     clause_summary: dict[str, object],
 ) -> dict[str, object]:
     """Assess whether syntax metrics for one parsed sentence are reliable."""
+    clause_summary = frozen_clause_summary(sentence, clause_summary)
     finite_heads = _heads_in_sentence(
         sentence,
         clause_summary,
@@ -1166,6 +1169,7 @@ def assess_syntax_reliability(
     clause_summary: dict[str, object],
 ) -> dict[str, object]:
     """Aggregate sentence reliability without rerunning syntax analysis."""
+    clause_summary = frozen_clause_summary(document, clause_summary)
     sentence_counts = {
         "high": 0,
         "medium": 0,
