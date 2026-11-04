@@ -186,6 +186,19 @@ essay-context parses, compared with frozen v1.2). A private local lock stores
 the hash of every source file; check it with
 `python scripts/validate_reliability_development_set.py`.
 
+Re-running the unchanged ML v1 models under this procedure
+(`python scripts/run_reliability_ml_v2_baseline.py`; 600 sentences where
+v1.2 did not abstain, 96 unreliable, 5 student-grouped folds):
+
+| System | Precision (95% CI) | Recall (95% CI) | F1 | Average precision |
+|---|---|---|---|---|
+| Model A: structural | 0.421 (0.348-0.497) | 0.719 (0.622-0.799) | 0.531 | 0.529 |
+| Model B: structural + signals | 0.516 (0.429-0.601) | 0.677 (0.578-0.762) | 0.586 | 0.716 |
+| Frozen rule-based v1.2 | 0.869 (0.762-0.932) | 0.552 (0.453-0.648) | 0.675 | - |
+
+At the fixed 0.5 threshold neither model is a better warning than v1.2: they
+find more unreliable sentences but raise 8-12 times as many false warnings.
+
 **Reference annotations.** Existing sentence-level reliability labels are
 provisional model-assisted reference annotations, not independent human gold.
 

@@ -301,7 +301,8 @@ class SentenceParser:
         sentences = self.sentences(record["essay_id"])
         sentence = sentences[record["sentence_index"] - 1]
 
-        if sentence.text != record["original_text"]:
+        # Dataset v1 stored some sentences without their trailing space.
+        if sentence.text.strip() != record["original_text"].strip():
             raise ValueError(
                 record["sentence_id"]
                 + ": current parser segmentation does not reproduce the "

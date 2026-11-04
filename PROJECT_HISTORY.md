@@ -1033,3 +1033,54 @@ labels are tied to Clause Detection v2.1 and segmentation v1; and the pilot
 already shaped Clause Detection v2.2 and segmentation v2. No model was
 trained and the holdout remains unopened.
 
+---
+
+# 2026-11-05
+
+## Reliability ML v2 Development Baseline
+
+### Decision
+
+Re-ran the unchanged ML v1 models (Model A: 44 structural features; Model B:
+plus 19 frozen v1.2 signals; balanced logistic regression, threshold 0.5)
+on `reliability_development_v1` under the procedure fixed in its manifest.
+Added `prepare_essay_context_observations()`, which takes each labelled
+sentence from the frozen parse of its complete essay; the isolated-sentence
+`prepare_ml_observations()` stays for the frozen ML v1 baseline.
+`SentenceParser` now compares sentence text without surrounding whitespace,
+because 72 Dataset v1 records were stored without the trailing space.
+
+### Results
+
+606 analyzable sentences (102 `UNRELIABLE`) from 37 students in five
+student-grouped folds; one fold holds only the Dataset v1 student with 21
+essays. v1.2 abstained on 6 sentences, so systems are compared on the
+remaining 600 (96 `UNRELIABLE`):
+
+| System | Precision (95% CI) | Recall (95% CI) | F1 | F2 | AP | FP |
+|---|---|---|---|---|---|---|
+| Model A | 0.421 (0.348-0.497) | 0.719 (0.622-0.799) | 0.531 | 0.630 | 0.529 | 95 |
+| Model B | 0.516 (0.429-0.601) | 0.677 (0.578-0.762) | 0.586 | 0.637 | 0.716 | 61 |
+| Frozen v1.2 warning | 0.869 (0.762-0.932) | 0.552 (0.453-0.648) | 0.675 | 0.596 | - | 8 |
+
+By batch, Model B reaches precision 0.455 and recall 0.566 on the CELL pilot
+(v1.2: 0.786 and 0.415, identical to the pilot evaluation) and 0.583 and
+0.814 on Dataset v1 (v1.2: 0.939 and 0.721 in essay context, against 0.941
+and 0.744 for isolated sentences).
+
+### Interpretation
+
+At the fixed threshold the models trade a modest recall gain for many more
+false warnings, so neither replaces v1.2 as a warning. Model B's average
+precision (0.716, against 0.529 for structural features alone and a 0.16
+base rate) shows that its probabilities rank errors usefully; the fixed
+threshold, not the ranking, is what produces the false warnings. Any
+threshold or operating-point choice must be made inside training folds, as
+the manifest requires.
+
+### Boundaries
+
+These are development estimates. No feature, model, threshold, or
+hyperparameter was changed, and the holdout remains unopened. The ML v1
+baseline and the CELL pilot evaluation reproduce their recorded results.
+

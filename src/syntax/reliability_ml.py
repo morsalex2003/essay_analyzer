@@ -21,6 +21,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from spacy.language import Language
 
+from src.cell_annotation import SentenceParser
 from src.nlp.pipeline import nlp
 from src.syntax.clauses import detect_clauses
 from src.syntax.reliability import assess_sentence_reliability
@@ -133,6 +134,59 @@ def prepare_ml_observations(
                 "target": target,
                 "features": features,
                 "frozen_reliability": frozen_result["reliability"],
+            }
+        )
+
+    return observations
+
+
+def prepare_essay_context_observations(
+    essay_records: Iterable[dict[str, object]],
+    annotation_records: Iterable[dict[str, object]],
+    nlp_pipeline: Language = nlp,
+) -> list[ReliabilityObservation]:
+    """Build observations from each sentence's span in its parsed essay.
+
+    Labels were judged on these spans, so this is the parse context fixed for
+    Reliability ML v2. ``prepare_ml_observations`` parses sentences in
+    isolation and stays unchanged for the frozen ML v1 baseline.
+    """
+
+    essays_by_id = {essay["essay_id"]: essay for essay in essay_records}
+    parser = SentenceParser(nlp_pipeline, essays_by_id)
+    clause_summaries = {}
+    observations = []
+
+    for record in annotation_records:
+        target = target_from_manual_label(record["manual_label"])
+
+        if target is None:
+            continue
+
+        essay_id = record["essay_id"]
+        if essay_id not in clause_summaries:
+            clause_summaries[essay_id] = detect_clauses(
+                parser.document(essay_id)
+            )
+
+        sentence = parser.sentence(record)
+        clause_summary = clause_summaries[essay_id]
+        observations.append(
+            {
+                "sentence_id": record["sentence_id"],
+                "essay_id": essay_id,
+                "student_id": record["student_id"],
+                "manual_label": record["manual_label"],
+                "target": target,
+                "features": extract_reliability_features(
+                    sentence,
+                    clause_summary,
+                    include_heuristic_signals=True,
+                ),
+                "frozen_reliability": assess_sentence_reliability(
+                    sentence,
+                    clause_summary,
+                )["reliability"],
             }
         )
 

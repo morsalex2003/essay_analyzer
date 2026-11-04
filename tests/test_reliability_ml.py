@@ -4,6 +4,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
+from src.cell_annotation import SentenceParser
+from src.cell_pilot_evaluation import heuristic_verdicts
+from src.nlp.pipeline import nlp
 from src.syntax.reliability_features import (
     ALL_FEATURE_NAMES,
     STRUCTURAL_FEATURE_NAMES,
@@ -19,6 +22,7 @@ from src.syntax.reliability_ml import (
     frozen_warning_predictions,
     observation_groups,
     observation_targets,
+    prepare_essay_context_observations,
     prepare_ml_observations,
     run_grouped_oof,
     select_grouped_splits,
@@ -344,3 +348,63 @@ def test_frozen_not_analyzable_stops_binary_mapping():
     observations[0]["frozen_reliability"] = "not_analyzable"
 
     assert frozen_warning_predictions(observations) is None
+
+
+ESSAY_TEXT = (
+    "The students wrote essays. They was tired because the test long. "
+    "Teachers who care help them."
+)
+
+
+def _essay_context_records():
+    essay = {
+        "essay_id": "essay_1",
+        "student_id": "student_1",
+        "original_text": ESSAY_TEXT,
+    }
+    sentences = [sentence.text for sentence in nlp(ESSAY_TEXT).sents]
+    labels = ("RELIABLE", "UNRELIABLE", "NOT_ANALYZABLE")
+    assert len(sentences) == len(labels)
+    annotations = []
+    for index, (text, label) in enumerate(zip(sentences, labels), start=1):
+        annotations.append(
+            {
+                "sentence_id": f"essay_1_s{index}",
+                "essay_id": "essay_1",
+                "student_id": "student_1",
+                "sentence_index": index,
+                # Ledgers may store the sentence without its trailing space.
+                "original_text": text.strip(),
+                "manual_label": label,
+            }
+        )
+    return essay, annotations
+
+
+def test_essay_context_observations_use_essay_spans():
+    essay, annotations = _essay_context_records()
+
+    observations = prepare_essay_context_observations([essay], annotations)
+
+    assert [observation["sentence_id"] for observation in observations] == [
+        "essay_1_s1",
+        "essay_1_s2",
+    ]
+    assert [observation["target"] for observation in observations] == [0, 1]
+    assert set(observations[0]["features"]) == set(ALL_FEATURE_NAMES)
+
+    parser = SentenceParser(nlp, {"essay_1": essay})
+    verdicts = heuristic_verdicts(annotations[:2], parser)
+    for observation in observations:
+        assert observation["frozen_reliability"] == verdicts[
+            observation["sentence_id"]
+        ]
+
+
+def test_essay_context_rejects_sentence_not_in_segmentation():
+    essay, annotations = _essay_context_records()
+    annotations[0]["original_text"] = "A different sentence."
+
+    with pytest.raises(ValueError, match="does not reproduce"):
+        prepare_essay_context_observations([essay], annotations)
+
