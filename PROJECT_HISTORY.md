@@ -931,3 +931,24 @@ and two already-broken parses whose error changes form. No `RELIABLE` or
 output. The rules were designed on development data and are not independent
 validation.
 
+## CELL Pilot v1 Error Analysis of Syntax Reliability v1.2
+
+### Decision
+
+Grouped the frozen v1.2 heuristic's errors on the reviewed CELL pilot in
+`data/syntax_reliability/external/cell/pilot_v1_error_analysis.md`
+(aggregate counts and synthetic examples only). Comma-spliced clauses are its
+strongest area. The 31 misses split into nouns parsed as verbs (8),
+segmentation errors (6), clause attachment errors without a comma cue (6),
+noun/verb part-of-speech swaps (4), reduced participles counted as finite (3),
+Clause Detection v2.1 misclassifications now fixed in v2.2 (2), and modals
+with a missing verb outside the root (2). Five of six false warnings come from
+`nominal_predicate_coordination` on genuine but local attachment errors.
+
+### Boundaries
+
+The heuristic was not changed. The listed candidate signals are directions
+for a future version, with counts that are upper bounds from the same
+development data; they must be evaluated on data they were not designed on,
+ultimately the untouched holdout.
+
