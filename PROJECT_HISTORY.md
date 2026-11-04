@@ -846,3 +846,52 @@ provisional reference annotations, not independent human gold, and the
 evaluation report must state their origin counts. No label existed when the
 option was added.
 
+# 2026-11-04
+
+## CELL Reliability Pilot v1 Labelling and Review
+
+### Decision
+
+All 420 pilot sentences were labelled as `model_assisted_manual_review`:
+sentences 1-20 in an owner session with model suggestions
+(`owner_model_assisted_v1`), sentences 21-420 by the model
+(`claude_review_v1`). The dataset owner then reviewed every `UNRELIABLE`,
+`NOT_ANALYZABLE`, and `MOSTLY_RELIABLE` model label (138) and a seeded random
+sample of 40 of 262 model `RELIABLE` labels (seed 20261105). All 138 were
+confirmed; in the sample, 37 were confirmed and 3 were changed from
+`RELIABLE` to `MOSTLY_RELIABLE` for missed local errors. Reviewed records are
+`adjudicated` with `adjudicator_id = human_owner_v1`; the ledger and the
+annotation tool now support the optional schema adjudication fields, and a
+relabel clears an earlier review. Recurring cases were written down as
+guideline clarifications in `data/syntax_reliability/README.md`.
+
+### Results
+
+Label totals: 270 `RELIABLE`, 56 `MOSTLY_RELIABLE`, 59 `UNRELIABLE`, 35
+`NOT_ANALYZABLE`. Frozen Syntax Reliability v1.2, scored in essay context on
+379 analyzable sentences (53 `UNRELIABLE`; 6 analyzable sentences where the
+heuristic abstained are excluded):
+
+- `warning` (medium or low): precision 0.786 (95% CI 0.605-0.898), recall
+  0.415 (0.293-0.549), F1 0.543, balanced accuracy 0.698, TP 22, FP 6, FN 31,
+  TN 320.
+- `low_only`: precision 1.000 (0.646-1.000), recall 0.132 (0.065-0.248).
+- Warning recall by failure type: matrix hierarchy 0.737, dependent inventory
+  0.448, finite inventory 0.417, non-finite inventory 0.360, major dependency
+  structure 0.333, sentence segmentation 0.250.
+
+On Dataset v1 the same operating point had precision 0.941 and recall 0.744.
+Several misses come from Clause Detection rather than the spaCy parse (for
+example, finite "should have prepared" or "children progress" classified as
+non-finite), which is a separate follow-up.
+
+### Boundaries
+
+These are development estimates: the pilot uses development students only,
+and the holdout remains unopened. Labels are model-proposed; the owner's
+review was not blind, since it saw the proposed label and rationale. 222
+model `RELIABLE` labels remain unreviewed; the sample suggests some should be
+`MOSTLY_RELIABLE`, which does not change the binary target. Dataset v1 parsed
+sentences in isolation, so its numbers are not directly comparable. No rule,
+threshold, or model was changed.
+

@@ -164,6 +164,7 @@ def evaluate_pilot(records, verdicts_by_sentence_id) -> dict[str, object]:
     student_ids = set()
     essay_ids = set()
     origins = {}
+    adjudication_statuses = {}
 
     for position, record in enumerate(records, start=1):
         manual_label = record["manual_label"]
@@ -176,6 +177,8 @@ def evaluate_pilot(records, verdicts_by_sentence_id) -> dict[str, object]:
         essay_ids.add(record["essay_id"])
         origin = record["annotation_origin"]
         origins[origin] = origins.get(origin, 0) + 1
+        status = record.get("adjudication_status", "single")
+        adjudication_statuses[status] = adjudication_statuses.get(status, 0) + 1
 
         target = target_from_manual_label(manual_label)
         if target is None:
@@ -242,6 +245,7 @@ def evaluate_pilot(records, verdicts_by_sentence_id) -> dict[str, object]:
             "labelled_students": len(student_ids),
             "labelled_essays": len(essay_ids),
             "annotation_origin_counts": origins,
+            "adjudication_status_counts": adjudication_statuses,
         },
         "label_by_heuristic": cross_table,
         "binary_task": {

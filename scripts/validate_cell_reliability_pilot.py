@@ -83,6 +83,15 @@ def main() -> None:
             else:
                 assert annotation["abstention_status"] == "none"
             assert annotation["annotator_id"]
+        if annotation["adjudication_status"] == "adjudicated":
+            assert manual_label is not None
+            assert annotation["adjudicator_id"]
+            assert annotation["adjudication_date"]
+            pre_label = annotation.get("pre_adjudication_label")
+            if pre_label is not None:
+                assert pre_label in schema["allowed_manual_labels"]
+        else:
+            assert annotation["adjudication_status"] == "single"
         assert hashlib.sha256(original_text.encode()).hexdigest() == (
             annotation["original_text_sha256"]
         )

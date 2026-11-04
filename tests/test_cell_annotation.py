@@ -6,6 +6,7 @@ import pytest
 
 from src.cell_annotation import (
     SentenceParser,
+    adjudicate_record,
     create_annotated_record,
     first_pending_position,
     format_sentence_view,
@@ -313,3 +314,67 @@ def test_session_uses_one_origin_for_every_label():
     assert records[1]["annotation_origin"] == "model_assisted_manual_review"
     assert records[2]["annotation_origin"] == "model_assisted_manual_review"
     assert records[2]["manual_label"] is None
+
+
+def test_adjudication_confirms_label_and_keeps_it():
+    record = _annotate(_template_records()[0], "RELIABLE")
+    reviewed = adjudicate_record(record, "human_owner_v1", "2026-11-04")
+
+    assert reviewed["manual_label"] == "RELIABLE"
+    assert reviewed["adjudication_status"] == "adjudicated"
+    assert reviewed["adjudicator_id"] == "human_owner_v1"
+    assert "pre_adjudication_label" not in reviewed
+
+
+def test_adjudication_revision_keeps_previous_label():
+    record = _annotate(_template_records()[0], "RELIABLE")
+    revised = _annotate(record, "MOSTLY_RELIABLE")
+    reviewed = adjudicate_record(
+        record,
+        "human_owner_v1",
+        "2026-11-04",
+        revised_record=revised,
+        adjudication_notes="local attachment error",
+    )
+
+    assert reviewed["manual_label"] == "MOSTLY_RELIABLE"
+    assert reviewed["pre_adjudication_label"] == "RELIABLE"
+    assert reviewed["adjudication_notes"] == "local attachment error"
+
+
+def test_adjudication_rejects_pending_record_and_bad_date():
+    with pytest.raises(ValueError, match="pending"):
+        adjudicate_record(_template_records()[0], "owner", "2026-11-04")
+
+    record = _annotate(_template_records()[0], "RELIABLE")
+    with pytest.raises(ValueError):
+        adjudicate_record(record, "owner", "04.11.2026")
+
+
+def test_merge_progress_accepts_only_adjudication_fields_as_additions():
+    template = _template_records()
+    progress = [dict(record) for record in template]
+    progress[0] = adjudicate_record(
+        _annotate(progress[0], "RELIABLE"),
+        "human_owner_v1",
+        "2026-11-04",
+    )
+
+    merged = merge_progress(template, progress)
+    assert merged[0]["adjudication_status"] == "adjudicated"
+
+    progress[1]["reviewer_name"] = "Real Name"
+    with pytest.raises(ValueError, match="progress fields differ"):
+        merge_progress(template, progress)
+
+
+def test_relabelling_clears_an_earlier_review():
+    reviewed = adjudicate_record(
+        _annotate(_template_records()[0], "RELIABLE"),
+        "human_owner_v1",
+        "2026-11-04",
+    )
+    relabelled = _annotate(reviewed, "UNRELIABLE", ["matrix_hierarchy"])
+
+    assert relabelled["adjudication_status"] == "single"
+    assert "adjudicator_id" not in relabelled

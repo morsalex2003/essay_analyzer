@@ -103,3 +103,8 @@ Every label from such a session is `model_assisted_manual_review`. The
 evaluation report counts labels by origin, and
 `evaluate_cell_reliability_pilot.py --origin human_manual_review` (or
 `model_assisted_manual_review`) scores one kind only.
+
+Records reviewed by the dataset owner carry `adjudication_status =
+"adjudicated"`, `adjudicator_id`, `adjudication_date`, and, when the label was
+changed, `pre_adjudication_label` and `adjudication_notes`. Relabelling a
+reviewed record in the annotation tool resets it to `single`.

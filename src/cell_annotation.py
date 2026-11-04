@@ -9,6 +9,7 @@ spaCy parse. Syntax Reliability heuristic verdicts and ML predictions are
 deliberately not shown, so that they cannot steer the reference labels.
 """
 
+from datetime import date
 import json
 import os
 from pathlib import Path
@@ -26,6 +27,16 @@ ANNOTATION_FIELDS = (
     "manual_failure_types",
     "annotation_notes",
     "annotator_id",
+    "adjudication_status",
+)
+
+# Optional schema_v1.json fields that appear in the progress ledger only
+# after the dataset owner has reviewed a label.
+ADJUDICATION_FIELDS = (
+    "adjudicator_id",
+    "adjudication_date",
+    "pre_adjudication_label",
+    "adjudication_notes",
 )
 
 # human_manual_review: the annotator chooses each label directly.
@@ -87,7 +98,8 @@ def merge_progress(template_records, progress_records):
     """Return template records with labels from an existing progress ledger.
 
     The progress ledger must describe exactly the same frozen sentences.
-    Only ``ANNOTATION_FIELDS`` may differ from the template.
+    Only ``ANNOTATION_FIELDS`` may differ from the template, and only
+    ``ADJUDICATION_FIELDS`` may be added to it.
     """
     if len(progress_records) != len(template_records):
         raise ValueError(
@@ -103,7 +115,9 @@ def merge_progress(template_records, progress_records):
     ):
         sentence_id = template_record["sentence_id"]
 
-        if set(progress_record) != set(template_record):
+        missing_fields = set(template_record) - set(progress_record)
+        added_fields = set(progress_record) - set(template_record)
+        if missing_fields or not added_fields <= set(ADJUDICATION_FIELDS):
             raise ValueError(sentence_id + ": progress fields differ.")
 
         for field_name, template_value in template_record.items():
@@ -174,6 +188,12 @@ def create_annotated_record(
             annotation_notes = None
 
     record = dict(template_record)
+
+    # A new label replaces any earlier review of the previous label.
+    for field_name in ADJUDICATION_FIELDS:
+        record.pop(field_name, None)
+    record["adjudication_status"] = "single"
+
     record["annotation_origin"] = annotation_origin
     record["manual_label"] = manual_label
     record["usable_binary_label"] = binary_mapping[manual_label]
@@ -183,6 +203,48 @@ def create_annotated_record(
     record["annotator_id"] = annotator_id.strip()
 
     return record
+
+
+def adjudicate_record(
+    record: dict[str, object],
+    adjudicator_id: str,
+    adjudication_date: str,
+    revised_record: dict[str, object] | None = None,
+    adjudication_notes: str | None = None,
+) -> dict[str, object]:
+    """Return a copy of a labelled record marked as reviewed by the owner.
+
+    ``revised_record`` is the result of ``create_annotated_record`` when the
+    reviewer changed the label; the original label is kept in
+    ``pre_adjudication_label``. Without it, the label is confirmed as is.
+    """
+    if not is_labelled(record):
+        raise ValueError(
+            record["sentence_id"] + ": cannot review a pending label."
+        )
+
+    if not isinstance(adjudicator_id, str) or adjudicator_id.strip() == "":
+        raise ValueError("adjudicator_id must be a non-empty string.")
+
+    date.fromisoformat(adjudication_date)
+
+    adjudicated = dict(record)
+
+    if revised_record is not None:
+        if revised_record["sentence_id"] != record["sentence_id"]:
+            raise ValueError("revised_record belongs to another sentence.")
+        adjudicated = dict(revised_record)
+        if revised_record["manual_label"] != record["manual_label"]:
+            adjudicated["pre_adjudication_label"] = record["manual_label"]
+
+    adjudicated["adjudication_status"] = "adjudicated"
+    adjudicated["adjudicator_id"] = adjudicator_id.strip()
+    adjudicated["adjudication_date"] = adjudication_date
+
+    if adjudication_notes is not None and adjudication_notes.strip() != "":
+        adjudicated["adjudication_notes"] = adjudication_notes.strip()
+
+    return adjudicated
 
 
 def is_labelled(record) -> bool:

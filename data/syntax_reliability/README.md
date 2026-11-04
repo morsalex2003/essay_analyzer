@@ -102,6 +102,35 @@ The clarification was added on 2026-11-03, before the first CELL pilot label.
 It resolves a case that guideline 1.2 left open and agrees with all existing
 adjudicated labels, so `annotation_guideline_version` stays `1.2`.
 
+### Clarifications from the CELL pilot review
+
+These rules were applied consistently during the CELL Reliability Pilot v1
+review on 2026-11-04. They interpret guideline 1.2 for recurring cases and
+change no earlier label. Examples are synthetic.
+
+- **Segmentation.** If the sentence segmenter moves a sentence boundary (for
+  example, it splits a citation at "et." or glues a heading or list marker to
+  the next sentence), the sentence is `UNRELIABLE` with
+  `sentence_segmentation`, even when the clauses inside the span are parsed
+  correctly, because sentence length, sentence count, and clauses per
+  sentence are distorted. A full stop the learner omitted is not a segmenter
+  error; such a sentence is labelled by what the parser did with its clauses.
+  A paragraph or line break that the segmenter ignored is a segmenter error.
+- **Missing verbs.** When the learner omits a verb but a modal or auxiliary
+  with its own subject is present ("The prices will very high."), the clause
+  is still a finite predication; if the parser loses it, the sentence is
+  `UNRELIABLE` with `finite_inventory`. When no finite element is present at
+  all ("Many students learning online."), the sentence is a fragment:
+  `NOT_ANALYZABLE` with `source_fragment`.
+- **Spurious non-finite units.** A noun tagged as a verb ("the risks of
+  cyberbullying", "to curriculum demands") that adds a non-finite predicative
+  unit makes the sentence `UNRELIABLE` with `nonfinite_inventory`, even when
+  only one such unit is added.
+- **Reduced participles.** A reduced relative or participial phrase ("the
+  group taught online") counted as a finite dependent clause makes the
+  sentence `UNRELIABLE` with `finite_inventory`, `dependent_inventory`, and
+  `nonfinite_inventory`.
+
 ## Data integrity
 
 - `student_id` is pseudonymized. Real student names must not be stored here.
