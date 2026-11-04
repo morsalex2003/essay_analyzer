@@ -16,8 +16,9 @@ from src.lexical.preprocessing import (
     preprocess_tokens,
 )
 from src.lexical.sophistication import lexical_sophistication
-from src.nlp.pipeline import nlp
-from src.syntax.clauses import detect_clauses
+from src.nlp.pipeline import analysis_pipeline
+from src.nlp.segmentation import SENTENCE_SEGMENTATION_VERSION
+from src.syntax.clauses import CLAUSE_DETECTOR_VERSION, detect_clauses
 from src.syntax.complexity import analyze_syntax_document
 from src.syntax.reliability import (
     assess_sentence_reliability,
@@ -198,7 +199,7 @@ def analyze_writing(
     EFLLex is intentionally available only through the explicit research
     option because its license does not permit commercial use.
     """
-    document = nlp(text)
+    document = analysis_pipeline()(text)
     clause_summary = detect_clauses(document)
     all_lexical_tokens = preprocess_tokens(
         document,
@@ -246,6 +247,10 @@ def analyze_writing(
 
     result = {
         "analysis_schema_version": ANALYSIS_SCHEMA_VERSION,
+        "processing_versions": {
+            "sentence_segmentation": SENTENCE_SEGMENTATION_VERSION,
+            "clause_detection": CLAUSE_DETECTOR_VERSION,
+        },
         "task_context": copy_task_context(task_context),
         "input_summary": {
             "text_sha256": sha256(text.encode("utf-8")).hexdigest(),

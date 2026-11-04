@@ -32,15 +32,19 @@ def test_analysis_returns_a_versioned_application_result():
 
 
 def test_analysis_runs_the_shared_spacy_pipeline_once(monkeypatch):
-    original_nlp = src.analysis.nlp
+    original_pipeline = src.analysis.analysis_pipeline()
     call_count = 0
 
     def counting_nlp(text):
         nonlocal call_count
         call_count += 1
-        return original_nlp(text)
+        return original_pipeline(text)
 
-    monkeypatch.setattr(src.analysis, "nlp", counting_nlp)
+    monkeypatch.setattr(
+        src.analysis,
+        "analysis_pipeline",
+        lambda: counting_nlp,
+    )
 
     analyze_writing("Students learn because teachers explain ideas.")
 

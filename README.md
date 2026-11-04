@@ -58,6 +58,10 @@ One spaCy `Doc` is created per text and reused by every component.
 - EFLLex learner-association profile (research-only, opt-in; see licensing).
 
 **Syntax**
+- Sentence segmentation v2 for essays: headings and list markers on their own
+  line are separated from the next sentence, and citation abbreviations such
+  as "et al." or "para." do not end a sentence. Hard-wrapped lines stay
+  together.
 - Sentence length statistics, dependency distance, and tree depth.
 - Clause Detection v2.2: finite clauses, dependent finite clauses, and
   non-finite predicative units are counted separately. Coordinated predicates

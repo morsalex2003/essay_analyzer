@@ -952,3 +952,33 @@ for a future version, with counts that are upper bounds from the same
 development data; they must be evaluated on data they were not designed on,
 ultimately the untouched holdout.
 
+## Sentence Segmentation v2
+
+### Decision
+
+The CELL pilot review found segmenter errors in 8 `UNRELIABLE` sentences:
+headings and list markers glued to the next sentence and citations split at
+"et." or "para.". Added the `learner_sentence_boundaries` spaCy component
+(`src/nlp/segmentation.py`), which runs before the parser and presets only
+boundaries it can decide from layout and punctuation: no boundary after a
+citation abbreviation followed by a lowercase word or digit; a boundary after
+a blank line when the next word is not lowercase; and a boundary after a
+single line break only when the previous line has at most 8 tokens (or is a
+numbered list marker) and the next line starts with a capital letter. A
+single line break alone is not a boundary, because learners hard-wrap long
+sentences. `analyze_writing()` uses this pipeline and records
+`processing_versions` (sentence segmentation "2", clause detection "2.2").
+
+### Boundaries
+
+The shared `nlp` pipeline keeps the original en_core_web_sm segmentation,
+because Syntax Reliability datasets, the CELL pilot, and Reliability ML v1
+must reproduce their recorded sentences; the pilot validator, the pilot
+evaluation, and the ML baseline reproduce their recorded results exactly.
+On the 35 pilot essays the component corrects 7 of the 8 reviewed
+segmentation errors; the remaining one follows a long unpunctuated line. All
+49 added boundaries were inspected and fall before headings, numbered items,
+or labels such as "Revision:"; five wrong boundaries were removed. The
+Dataset v1 essays are segmented exactly as before. The rules were designed on
+pilot development essays.
+
