@@ -1130,3 +1130,54 @@ features is unlikely to help; new evidence is needed.
 Development estimates only; the holdout remains unopened. ML v1, the CELL
 pilot evaluation, and the development set lock reproduce unchanged.
 
+## Reliability Error-Pattern Features (Schema 2.0)
+
+### Decision
+
+Added `src/syntax/reliability_error_features.py`: feature schema 2.0 is
+schema 1.0 plus nine structural features, one per misparse mechanism in the
+CELL pilot error analysis that schema 1.0 cannot see. Segmentation: an
+internal line break, a sentence ending in a citation abbreviation, a
+sentence not starting with a capital. Attachment: a capitalised subject
+pronoun right after a word, a dependent clause linked across ";".
+Part of speech: a noun or adjective heading a dependent clause with its own
+subject and no auxiliary or copula, a bare gerund `pcomp`. Classification:
+a finite-classified `acl` with no subject, marker, or relative word; a modal
+on a non-verbal, non-root head without a copula. None uses a lexicon; like
+schema 1.0 they are frozen on Clause Detection v2.1. Schema 1.0 and Models A
+and B are unchanged; Model C is Model B plus these features, evaluated with
+the same folds and threshold rules fixed in advance.
+
+### Results
+
+On the development set, the features fire on few sentences: for
+`UNRELIABLE` and usable sentences respectively, internal line break 19/42,
+noun clause head 5/5, bare gerund 4/0, finite `acl` 3/0, modal 2/0,
+starts without capital 2/4, and the other three once each. Twenty-one
+firings fall on `UNRELIABLE` sentences that v1.2 misses.
+
+On the 600 sentences where v1.2 did not abstain, Model C is worse than
+Model B: average precision 0.577 against 0.716; at a 0.5 threshold,
+precision 0.431 and recall 0.688 (Model B 0.516 and 0.677); with the
+`heuristic_precision` threshold, precision 0.354 and recall 0.240 (Model B
+0.864 and 0.531). With `max_f1` it catches 12 errors v1.2 misses, against 6
+for Model B, but at 68 false warnings.
+
+### Interpretation
+
+The coefficients show the cause. After standardisation a feature that fires
+on one or two training sentences takes values up to about 22, so even a
+small coefficient adds about 5-8 to the logit and saturates the probability
+for any sentence with that pattern. The model memorises individual training
+sentences, and the internal line break, frequent in hard-wrapped usable
+text, adds noise. The individual patterns are precise but too rare to be
+learned as separate standardised inputs from 606 sentences.
+
+### Boundaries
+
+Model C was specified before it was run and is reported as it came out.
+The features were designed from the same development errors they are
+evaluated on. No feature, model, or threshold was changed after the run;
+ML v1, the CELL pilot evaluation, and the development set lock reproduce
+unchanged. The holdout remains unopened.
+

@@ -31,6 +31,7 @@ from src.reliability_development_set import (  # noqa: E402
 from src.syntax.reliability_ml import (  # noqa: E402
     MODEL_A_FEATURE_NAMES,
     MODEL_B_FEATURE_NAMES,
+    MODEL_C_FEATURE_NAMES,
     build_dummy_classifier,
     calculate_binary_metrics,
     feature_name_leakage,
@@ -61,6 +62,7 @@ def load_observations():
         batch_observations = prepare_essay_context_observations(
             batch["essays"],
             batch["annotations"],
+            include_error_pattern_features=True,
         )
         observations.extend(batch_observations)
         batch_ids.extend([batch["batch_id"]] * len(batch_observations))
@@ -155,7 +157,7 @@ def main() -> None:
     if dict(Counter(targets.tolist())) != EXPECTED_TARGET_COUNTS:
         raise SystemExit("Unexpected binary target distribution")
 
-    leaking_features = feature_name_leakage(MODEL_B_FEATURE_NAMES)
+    leaking_features = feature_name_leakage(MODEL_C_FEATURE_NAMES)
     if leaking_features:
         raise SystemExit(f"Feature leakage detected: {leaking_features}")
 
@@ -170,6 +172,9 @@ def main() -> None:
     )
     model_b = oof_arrays(
         run_grouped_oof(observations, MODEL_B_FEATURE_NAMES, splits)
+    )
+    model_c = oof_arrays(
+        run_grouped_oof(observations, MODEL_C_FEATURE_NAMES, splits)
     )
     dummy = oof_arrays(
         run_grouped_oof(
@@ -204,6 +209,7 @@ def main() -> None:
         (
             ("Model A (structural)", *model_a),
             ("Model B (structural+signals)", *model_b),
+            ("Model C (B+error patterns)", *model_c),
             ("Dummy (most frequent)", *dummy),
         ),
         targets,
@@ -213,6 +219,7 @@ def main() -> None:
     comparison_systems = (
         ("Model A (structural)", *model_a),
         ("Model B (structural+signals)", *model_b),
+        ("Model C (B+error patterns)", *model_c),
         ("Frozen v1.2 warning", frozen, None),
     )
     compared = frozen >= 0
@@ -236,6 +243,7 @@ def main() -> None:
     for model_name, feature_names in (
         ("Model A", MODEL_A_FEATURE_NAMES),
         ("Model B", MODEL_B_FEATURE_NAMES),
+        ("Model C", MODEL_C_FEATURE_NAMES),
     ):
         for rule in THRESHOLD_RULES:
             predictions, probabilities, thresholds = (

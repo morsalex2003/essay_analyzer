@@ -25,6 +25,10 @@ from src.cell_annotation import SentenceParser
 from src.nlp.pipeline import nlp
 from src.syntax.clauses import detect_clauses
 from src.syntax.reliability import assess_sentence_reliability
+from src.syntax.reliability_error_features import (
+    ERROR_PATTERN_FEATURE_NAMES,
+    extract_error_pattern_features,
+)
 from src.syntax.reliability_features import (
     ALL_FEATURE_NAMES,
     STRUCTURAL_FEATURE_NAMES,
@@ -39,6 +43,7 @@ CLASSIFICATION_THRESHOLD = 0.5
 
 MODEL_A_FEATURE_NAMES = STRUCTURAL_FEATURE_NAMES
 MODEL_B_FEATURE_NAMES = ALL_FEATURE_NAMES
+MODEL_C_FEATURE_NAMES = (*ALL_FEATURE_NAMES, *ERROR_PATTERN_FEATURE_NAMES)
 
 FORBIDDEN_FEATURE_NAME_FRAGMENTS = (
     "label",
@@ -144,6 +149,7 @@ def prepare_essay_context_observations(
     essay_records: Iterable[dict[str, object]],
     annotation_records: Iterable[dict[str, object]],
     nlp_pipeline: Language = nlp,
+    include_error_pattern_features: bool = False,
 ) -> list[ReliabilityObservation]:
     """Build observations from each sentence's span in its parsed essay.
 
@@ -171,6 +177,16 @@ def prepare_essay_context_observations(
 
         sentence = parser.sentence(record)
         clause_summary = clause_summaries[essay_id]
+        features = extract_reliability_features(
+            sentence,
+            clause_summary,
+            include_heuristic_signals=True,
+        )
+        if include_error_pattern_features:
+            features.update(
+                extract_error_pattern_features(sentence, clause_summary)
+            )
+
         observations.append(
             {
                 "sentence_id": record["sentence_id"],
@@ -178,11 +194,7 @@ def prepare_essay_context_observations(
                 "student_id": record["student_id"],
                 "manual_label": record["manual_label"],
                 "target": target,
-                "features": extract_reliability_features(
-                    sentence,
-                    clause_summary,
-                    include_heuristic_signals=True,
-                ),
+                "features": features,
                 "frozen_reliability": assess_sentence_reliability(
                     sentence,
                     clause_summary,

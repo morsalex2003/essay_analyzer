@@ -205,6 +205,11 @@ caught errors are ones v1.2 also catches. 40 of 96 unreliable sentences are
 caught by neither, so the current structural features carry no evidence
 about them.
 
+Adding nine error-pattern features from the pilot error analysis (feature
+schema 2.0, `src/syntax/reliability_error_features.py`) made the model worse
+(Model C average precision 0.577 against 0.716): the patterns are rare, and
+after standardisation a single occurrence dominates the logistic model.
+
 **Reference annotations.** Existing sentence-level reliability labels are
 provisional model-assisted reference annotations, not independent human gold.
 
