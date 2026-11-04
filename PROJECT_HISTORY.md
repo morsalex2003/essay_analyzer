@@ -1084,3 +1084,49 @@ These are development estimates. No feature, model, threshold, or
 hyperparameter was changed, and the holdout remains unopened. The ML v1
 baseline and the CELL pilot evaluation reproduce their recorded results.
 
+## Reliability ML v2 Nested Thresholds
+
+### Decision
+
+Added `src/syntax/reliability_thresholds.py`. For each outer
+student-grouped fold, a threshold is chosen from inner student-grouped
+out-of-fold probabilities on that fold's training students and applied
+unchanged to its validation students, so validation labels never set the
+threshold. Two rules were fixed before the first run: `max_f1` (highest
+inner F1, ties to the higher threshold) and `heuristic_precision` (lowest
+threshold whose inner precision reaches frozen v1.2's warning precision on
+the same training sentences; if none does, no warnings). Models, features,
+and outer folds are unchanged.
+
+### Results
+
+On the 600 sentences where v1.2 did not abstain (96 `UNRELIABLE`):
+
+| System | Precision (95% CI) | Recall (95% CI) | F1 | FP |
+|---|---|---|---|---|
+| Model A `max_f1` | 0.435 (0.358-0.516) | 0.667 (0.568-0.753) | 0.527 | 83 |
+| Model A `heuristic_precision` | 0.833 (0.552-0.953) | 0.104 (0.058-0.181) | 0.185 | 2 |
+| Model B `max_f1` | 0.701 (0.592-0.792) | 0.562 (0.463-0.657) | 0.624 | 23 |
+| Model B `heuristic_precision` | 0.864 (0.755-0.930) | 0.531 (0.432-0.628) | 0.658 | 8 |
+| Frozen v1.2 warning | 0.869 (0.762-0.932) | 0.552 (0.453-0.648) | 0.675 | 8 |
+
+Of the `UNRELIABLE` sentences, Model B `heuristic_precision` and v1.2 both
+catch 48; Model B alone catches 3, v1.2 alone 5, and neither 40. Model A
+`max_f1` catches 20 that v1.2 misses, at 83 false warnings.
+
+### Interpretation
+
+Choosing the threshold properly removes the excess false warnings, but
+Model B then reproduces the heuristic rather than extending it: its
+signal features carry the decision, and the structural features add almost
+no separate evidence at useful precision. The 40 errors caught by neither
+system match the mechanisms of the CELL pilot error analysis (nouns parsed
+as verbs, part-of-speech swaps, attachment without a comma cue), which the
+feature schema v1 does not describe. More model capacity on the same
+features is unlikely to help; new evidence is needed.
+
+### Boundaries
+
+Development estimates only; the holdout remains unopened. ML v1, the CELL
+pilot evaluation, and the development set lock reproduce unchanged.
+

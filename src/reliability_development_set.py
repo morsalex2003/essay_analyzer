@@ -229,7 +229,9 @@ def essay_context_mismatches(
     some ledgers stored sentence text without the trailing space.
     """
 
-    essay_texts = {essay["essay_id"]: essay["original_text"] for essay in essays}
+    essay_texts = {
+        essay["essay_id"]: essay["original_text"] for essay in essays
+    }
     sentences_by_essay = {}
     mismatches = []
 

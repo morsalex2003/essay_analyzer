@@ -39,10 +39,14 @@ from src.syntax.reliability_ml import (  # noqa: E402
     run_grouped_oof,
     select_grouped_splits,
 )
+from src.syntax.reliability_thresholds import (  # noqa: E402
+    THRESHOLD_RULES,
+    WARNING_CATEGORIES,
+    nested_threshold_predictions,
+)
 
 
 EXPECTED_TARGET_COUNTS = {0: 504, 1: 102}
-WARNING_CATEGORIES = ("medium", "low")
 
 
 def load_observations():
@@ -65,7 +69,7 @@ def load_observations():
 
 
 def frozen_warning_with_abstentions(observations):
-    """Return v1.2 warning predictions, with -1 where the heuristic abstained."""
+    """Return v1.2 warning predictions, -1 where the heuristic abstained."""
     predictions = []
     for observation in observations:
         reliability = observation["frozen_reliability"]
@@ -105,16 +109,34 @@ def print_row(name, metrics):
 
 
 def print_table(title, systems, targets, mask):
-    print(title, f"(n={int(mask.sum())}, unreliable={int(targets[mask].sum())})")
+    unreliable_count = int(targets[mask].sum())
+    print(title, f"(n={int(mask.sum())}, unreliable={unreliable_count})")
     for name, predictions, probabilities in systems:
         selected_probabilities = (
             None if probabilities is None else probabilities[mask]
         )
         print_row(
             name,
-            summarize(targets[mask], predictions[mask], selected_probabilities),
+            summarize(
+                targets[mask], predictions[mask], selected_probabilities
+            ),
         )
     print()
+
+
+def print_overlap_with_heuristic(name, predictions, frozen, targets, mask):
+    """Count which unreliable sentences each system catches."""
+    unreliable = mask & (targets == 1)
+    model_warns = predictions == 1
+    heuristic_warns = frozen == 1
+    both = int(np.sum(unreliable & model_warns & heuristic_warns))
+    model_only = int(np.sum(unreliable & model_warns & ~heuristic_warns))
+    heuristic_only = int(np.sum(unreliable & ~model_warns & heuristic_warns))
+    neither = int(np.sum(unreliable & ~model_warns & ~heuristic_warns))
+    print(
+        f"  {name:<28} both {both}, model only {model_only}, "
+        f"v1.2 only {heuristic_only}, neither {neither}"
+    )
 
 
 def oof_arrays(result):
@@ -207,6 +229,49 @@ def main() -> None:
             comparison_systems,
             targets,
             compared & (batch_ids == batch_id),
+        )
+
+    print("Thresholds chosen inside training folds (rules fixed in advance)")
+    threshold_systems = []
+    for model_name, feature_names in (
+        ("Model A", MODEL_A_FEATURE_NAMES),
+        ("Model B", MODEL_B_FEATURE_NAMES),
+    ):
+        for rule in THRESHOLD_RULES:
+            predictions, probabilities, thresholds = (
+                nested_threshold_predictions(
+                    observations, feature_names, splits, rule
+                )
+            )
+            rounded = [round(threshold, 3) for threshold in thresholds]
+            print(f"  {model_name} {rule}: fold thresholds {rounded}")
+            threshold_systems.append(
+                (f"{model_name} {rule}", predictions, probabilities)
+            )
+    print()
+
+    nested_systems = (
+        *threshold_systems,
+        ("Frozen v1.2 warning", frozen, None),
+    )
+    print_table(
+        "Nested thresholds, v1.2 not abstained",
+        nested_systems,
+        targets,
+        compared,
+    )
+    for batch_id in sorted(set(batch_ids)):
+        print_table(
+            f"Nested thresholds, batch {batch_id}, v1.2 not abstained",
+            nested_systems,
+            targets,
+            compared & (batch_ids == batch_id),
+        )
+
+    print("Unreliable sentences caught, compared with v1.2 (not abstained)")
+    for name, predictions, _ in threshold_systems:
+        print_overlap_with_heuristic(
+            name, predictions, frozen, targets, compared
         )
 
 

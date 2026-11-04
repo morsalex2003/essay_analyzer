@@ -198,6 +198,12 @@ v1.2 did not abstain, 96 unreliable, 5 student-grouped folds):
 
 At the fixed 0.5 threshold neither model is a better warning than v1.2: they
 find more unreliable sentences but raise 8-12 times as many false warnings.
+With thresholds chosen inside training folds only, Model B matches v1.2
+instead of improving on it: at v1.2's training precision it reaches
+precision 0.864 and recall 0.531 (v1.2: 0.869 and 0.552), and 48 of its 51
+caught errors are ones v1.2 also catches. 40 of 96 unreliable sentences are
+caught by neither, so the current structural features carry no evidence
+about them.
 
 **Reference annotations.** Existing sentence-level reliability labels are
 provisional model-assisted reference annotations, not independent human gold.
