@@ -1,4 +1,9 @@
-"""Prepare the private CELL Reliability Pilot v1 annotation batch."""
+"""Prepare a private CELL reliability annotation batch.
+
+Defaults reproduce CELL Reliability Pilot v1 from development students.
+With --role untouched_holdout it prepares the holdout batch with the same
+procedure; only counts and structural coverage are printed, never text.
+"""
 
 from __future__ import annotations
 
@@ -44,6 +49,7 @@ from src.syntax.reliability_features import (  # noqa: E402
 
 
 SOURCE_STAGE = "cell_reliability_pilot_v1"
+SPLIT_ROLES = ("development", "untouched_holdout")
 # Pilot v1 selection is frozen on Clause Detection v2.1.
 CLAUSE_DETECTOR_VERSION = "2.1"
 RELIABILITY_GUIDELINE_VERSION = "1.2"
@@ -87,6 +93,9 @@ def parse_arguments() -> argparse.Namespace:
         type=int,
         default=CELL_PILOT_SENTENCES_PER_STUDENT,
     )
+    parser.add_argument("--role", choices=SPLIT_ROLES, default="development")
+    parser.add_argument("--seed", type=int, default=CELL_PILOT_SEED)
+    parser.add_argument("--source-stage", default=SOURCE_STAGE)
     return parser.parse_args()
 
 
@@ -123,7 +132,8 @@ def main() -> None:
         records,
         roles,
         student_count=arguments.students,
-        seed=CELL_PILOT_SEED,
+        seed=arguments.seed,
+        role=arguments.role,
     )
     selected_student_set = set(selected_students)
     selected_records = [
@@ -132,10 +142,10 @@ def main() -> None:
         if record.student_id in selected_student_set
     ]
     if any(
-        roles[record.student_id] != "development"
+        roles[record.student_id] != arguments.role
         for record in selected_records
     ):
-        raise RuntimeError("Pilot selection attempted to include holdout content")
+        raise RuntimeError("Selection crossed the development/holdout split")
 
     parsed_by_student: dict[
         str, dict[str, list[PilotSentence]]
@@ -176,7 +186,7 @@ def main() -> None:
     course_targets = assign_course_targets(
         selected_students,
         selected_records,
-        seed=CELL_PILOT_SEED,
+        seed=arguments.seed,
     )
     for student_id in selected_students:
         candidates_by_essay = parsed_by_student[student_id]
@@ -189,7 +199,7 @@ def main() -> None:
             }
         essay_id = select_pilot_essay(
             candidates_by_essay,
-            seed=CELL_PILOT_SEED,
+            seed=arguments.seed,
         )
         essay_candidates = candidates_by_essay[essay_id]
         selected_essay_records.append(essay_candidates[0].essay_record)
@@ -197,7 +207,7 @@ def main() -> None:
             select_pilot_sentences(
                 essay_candidates,
                 sentence_count=arguments.sentences_per_student,
-                seed=CELL_PILOT_SEED,
+                seed=arguments.seed,
             )
         )
 
@@ -213,8 +223,8 @@ def main() -> None:
                 "task_id": record.parsed_filename.task_id,
                 "prompt_id": record.parsed_filename.question_id,
                 "response_family_id": None,
-                "source_stage": SOURCE_STAGE,
-                "data_status": "development",
+                "source_stage": arguments.source_stage,
+                "data_status": arguments.role,
                 "original_text": learner_text,
                 "original_text_sha256": hashlib.sha256(
                     learner_text.encode("utf-8")
@@ -237,7 +247,7 @@ def main() -> None:
                 ),
                 "essay_id": sentence.essay_record.record_id,
                 "student_id": sentence.essay_record.student_id,
-                "source_stage": SOURCE_STAGE,
+                "source_stage": arguments.source_stage,
                 "sentence_index": sentence.sentence_index,
                 "original_text": sentence.text,
                 "original_text_sha256": sentence_hash,
@@ -258,7 +268,7 @@ def main() -> None:
         )
 
     schema = {
-        "batch_id": SOURCE_STAGE,
+        "batch_id": arguments.source_stage,
         "status": "annotation_template",
         "allowed_manual_labels": [
             "RELIABLE",
@@ -301,9 +311,9 @@ def main() -> None:
         record.course_id for record in selected_essay_records
     )
     report = {
-        "pilot_version": SOURCE_STAGE,
-        "seed": CELL_PILOT_SEED,
-        "data_role": "development",
+        "pilot_version": arguments.source_stage,
+        "seed": arguments.seed,
+        "data_role": arguments.role,
         "holdout_opened": False,
         "selection_inputs": [
             "student_id",

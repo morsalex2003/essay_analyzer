@@ -108,3 +108,23 @@ Records reviewed by the dataset owner carry `adjudication_status =
 "adjudicated"`, `adjudicator_id`, `adjudication_date`, and, when the label was
 changed, `pre_adjudication_label` and `adjudication_notes`. Relabelling a
 reviewed record in the annotation tool resets it to `single`.
+
+## Holdout evaluation v1
+
+`holdout_v1_evaluation_plan.json` fixes the final holdout evaluation before
+any holdout sentence is selected, labelled, or predicted: 25 holdout
+students and 12 sentences each, selected with the pilot procedure (seed
+20261105); frozen v1.2 as reference, v1.3 as the primary candidate, and
+Reliability ML Model B as a secondary candidate; metrics, paired McNemar
+comparisons, and the decision rule for v1.3.
+
+The batch is prepared with
+`scripts/prepare_cell_reliability_pilot.py --role untouched_holdout --seed
+20261105 --students 25 --source-stage cell_reliability_holdout_v1
+--local-output .../local/holdout_v1 --report .../holdout_v1_report.json`.
+`scripts/build_cell_annotation_packet.py` writes a blind packet (sentences
+with context, token parse, clause heads, the guideline, and an empty label
+sheet; no heuristic or ML output) for a separate labelling session, and
+`scripts/apply_cell_annotation_labels.py` writes the filled sheet to the
+ledger, printing counts only.
+

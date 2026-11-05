@@ -1,0 +1,64 @@
+{
+  "plan_version": "1.0",
+  "plan_id": "cell_reliability_holdout_v1_evaluation",
+  "fixed_at": "2026-11-05",
+  "fixed_before": "holdout sentence selection, annotation, and any holdout prediction",
+  "data": {
+    "split": "data/syntax_reliability/external/cell/split_v1.json",
+    "role": "untouched_holdout",
+    "batch_id": "cell_reliability_holdout_v1",
+    "selection": "CELL pilot procedure (src/cell_pilot.py) applied to holdout students: structural metadata for students, parser-derived structural categories for sentences; no labels, verdicts, predictions, quality, length, or duplicate flags",
+    "selection_seed": 20261105,
+    "students": 25,
+    "sentences_per_student": 12,
+    "parse": {
+      "pipeline": "frozen en_core_web_sm 3.8.0 with spaCy 3.8.13 (sentence segmentation v1)",
+      "clause_detector_version": "2.1",
+      "context": "each sentence is a span of its complete essay parse"
+    }
+  },
+  "annotation": {
+    "guideline_version": "1.2",
+    "labeller": "a separate model session (annotator_id claude_sealed_holdout_v1) that sees only a blind packet: sentence, neighbouring sentences, token parse, clause heads, and the annotation guideline",
+    "labeller_must_not_see": [
+      "Syntax Reliability verdicts or flags of any version",
+      "Reliability ML features, probabilities, or predictions",
+      "heuristic and ML source code",
+      "development results, error analyses, and project history"
+    ],
+    "annotation_origin": "model_assisted_manual_review",
+    "owner_review": "the dataset owner reviews every UNRELIABLE, MOSTLY_RELIABLE, and NOT_ANALYZABLE label and a seeded random sample of 40 RELIABLE labels (seed 20261105); reviewed records become adjudicated by human_owner_v1",
+    "freeze": "labels are locked by file hash before the evaluation run; no label changes after the run"
+  },
+  "systems": {
+    "reference": "Syntax Reliability v1.2 warning (medium or low)",
+    "primary_candidate": "Syntax Reliability v1.3 warning (medium or low)",
+    "secondary_candidate": "Reliability ML Model B (feature schema 1.0 with v1.2 signals, balanced logistic regression as in ML v1) refit on all 606 development observations, with one threshold chosen by the heuristic_precision rule on the 5-fold student-grouped out-of-fold probabilities of the development set",
+    "not_evaluated": [
+      "Model A and Model C, which did not beat Model B on development data",
+      "Clause Detection v2.2 and sentence segmentation v2, whose labels would need re-judging"
+    ]
+  },
+  "analysis": {
+    "target": {
+      "positive": ["UNRELIABLE"],
+      "negative": ["RELIABLE", "MOSTLY_RELIABLE"],
+      "excluded": ["NOT_ANALYZABLE"]
+    },
+    "analysis_set": "labelled analyzable sentences where v1.2 does not abstain; abstentions are counted and reported separately",
+    "metrics": ["precision", "recall", "f1", "balanced_accuracy", "true and false positive and negative counts"],
+    "confidence_intervals": "Wilson 95% for precision and recall",
+    "paired_comparison": "v1.3 against v1.2 and Model B against v1.2: discordant counts on UNRELIABLE sentences (recall) and on usable sentences (false warnings), each with a two-sided exact McNemar test",
+    "breakdowns": ["manual failure type (recall)", "adjudicated versus single labels"],
+    "primary_question": "Does v1.3 raise recall over v1.2 without lowering precision?",
+    "decision_rule": "v1.3 becomes the reference heuristic if its recall gain on UNRELIABLE sentences is significant (exact McNemar p < 0.05) and it adds no significant false warnings; otherwise the result is reported as inconclusive or negative and v1.3 stays a development candidate",
+    "power_note": "the v1.3 patterns occurred in 9 of 420 pilot sentences, so few discordant pairs are expected and an inconclusive result is likely"
+  },
+  "opening_procedure": [
+    "freeze this plan, the evaluated code, and the development set lock in git",
+    "complete annotation and owner review, then lock the holdout labels by hash",
+    "record the opening date and reason in split_v1.json (holdout_opened_at, holdout_open_reason) and in PROJECT_HISTORY.md",
+    "run the evaluation once and report every planned number, whatever the outcome",
+    "after opening, the 25 evaluated students are no longer untouched; later claims of untouched evaluation must use other holdout students"
+  ]
+}

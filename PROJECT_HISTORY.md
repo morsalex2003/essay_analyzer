@@ -1222,3 +1222,37 @@ patterns never occur there. A fair estimate needs the untouched holdout.
 ML v1, the CELL pilot evaluation, and the development set lock reproduce
 unchanged.
 
+## CELL Holdout Evaluation Plan v1
+
+### Decision
+
+Fixed the final holdout evaluation in
+`data/syntax_reliability/external/cell/holdout_v1_evaluation_plan.json`
+before selecting, reading, labelling, or predicting any holdout sentence.
+The plan names the sample (25 holdout students, 12 sentences each, pilot
+selection procedure, seed 20261105), the parse context, the annotation
+procedure, the systems (v1.2 reference, v1.3 primary candidate, Model B
+refit on the development set with one `heuristic_precision` threshold as a
+secondary candidate), the metrics and paired McNemar comparisons, the
+decision rule for adopting v1.3, and the opening procedure.
+
+Labels come from a separate model session that sees only a blind packet:
+each sentence with its neighbours, the token parse, the clause heads, and
+the guideline, with no heuristic verdicts, ML output, code, or development
+results. The owner then reviews every non-`RELIABLE` label and a seeded
+sample of 40 `RELIABLE` labels. This session, which designed v1.3, does not
+read holdout text or labels; the preparation and label scripts print counts
+only.
+
+`select_pilot_students()` takes a `role`, and
+`prepare_cell_reliability_pilot.py` takes `--role`, `--seed`, and
+`--source-stage`; with defaults it reproduces CELL Reliability Pilot v1
+exactly. Added `build_cell_annotation_packet.py` and
+`apply_cell_annotation_labels.py`.
+
+### Boundaries
+
+The holdout is not opened: no holdout batch exists yet, and the plan was
+committed before it is prepared. With few expected v1.3 pattern sentences,
+the plan states in advance that an inconclusive result is likely.
+

@@ -61,17 +61,18 @@ def select_pilot_students(
     *,
     student_count: int = CELL_PILOT_STUDENT_COUNT,
     seed: int = CELL_PILOT_SEED,
+    role: str = "development",
 ) -> list[str]:
-    """Select development students using structural metadata only."""
+    """Select students of one split role using structural metadata only."""
 
-    development_records = [
+    role_records = [
         record
         for record in records
-        if student_roles.get(record.student_id) == "development"
+        if student_roles.get(record.student_id) == role
     ]
-    essay_counts = Counter(record.student_id for record in development_records)
+    essay_counts = Counter(record.student_id for record in role_records)
     student_features: dict[str, set[str]] = {}
-    for record in development_records:
+    for record in role_records:
         student_features.setdefault(record.student_id, set()).update(
             (
                 f"period:{record.period}",
@@ -81,7 +82,7 @@ def select_pilot_students(
         )
 
     if student_count > len(student_features):
-        raise ValueError("student_count exceeds available development students")
+        raise ValueError(f"student_count exceeds available {role} students")
 
     feature_frequency = Counter(
         feature
