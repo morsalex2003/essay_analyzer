@@ -24,7 +24,10 @@ from spacy.language import Language
 from src.cell_annotation import SentenceParser
 from src.nlp.pipeline import nlp
 from src.syntax.clauses import detect_clauses
-from src.syntax.reliability import assess_sentence_reliability
+from src.syntax.reliability import (
+    FROZEN_RELIABILITY_VERSION,
+    assess_sentence_reliability,
+)
 from src.syntax.reliability_error_features import (
     ERROR_PATTERN_FEATURE_NAMES,
     extract_error_pattern_features,
@@ -129,6 +132,7 @@ def prepare_ml_observations(
         frozen_result = assess_sentence_reliability(
             document,
             clause_summary,
+            FROZEN_RELIABILITY_VERSION,
         )
         observations.append(
             {
@@ -198,6 +202,7 @@ def prepare_essay_context_observations(
                 "frozen_reliability": assess_sentence_reliability(
                     sentence,
                     clause_summary,
+                    FROZEN_RELIABILITY_VERSION,
                 )["reliability"],
             }
         )

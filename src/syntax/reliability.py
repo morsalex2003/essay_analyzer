@@ -1,6 +1,20 @@
 from spacy.tokens import Doc, Span, Token
 
 from src.syntax.clauses import SUBJECT_DEPENDENCIES, frozen_clause_summary
+from src.syntax.reliability_error_features import (
+    count_bare_gerund_pcomp,
+    count_finite_acl_without_subject,
+    count_modal_on_nonverbal_head,
+    sentence_words,
+)
+
+
+# v1.3 adds three warning signals. Syntax Reliability datasets, the CELL
+# pilot, feature schema 1.0, and Reliability ML stay on frozen v1.2. Both
+# versions use Clause Detection v2.1.
+RELIABILITY_VERSION = "1.3"
+FROZEN_RELIABILITY_VERSION = "1.2"
+SUPPORTED_RELIABILITY_VERSIONS = ("1.2", "1.3")
 
 
 # These are provisional engineering thresholds, not empirically validated
@@ -40,6 +54,17 @@ WARNING_SIGNALS = (
     "nonfinite_head_finite_support_conflict",
     "unrepresented_finite_predication",
     "nonverbal_root_finite_auxiliary_conflict",
+)
+
+# Misparse patterns from the CELL pilot error analysis that no v1.2 signal
+# covers: a bare gerund prepositional complement (usually a noun such as
+# "cyberbullying"), a finite-classified reduced clause without subject,
+# marker, or relative word (usually a participle), and a modal attached to
+# a non-verbal, non-root head without a copula (a missing verb).
+V1_3_WARNING_SIGNALS = (
+    "bare_gerund_pcomp",
+    "finite_acl_without_subject",
+    "modal_on_nonverbal_head",
 )
 
 NON_FINITE_VERB_FORMS = ("Inf", "Ger", "Part")
@@ -967,12 +992,39 @@ def _has_coordinator_dependency_conflict(
     return False
 
 
+def _check_reliability_version(version: str) -> None:
+    if version not in SUPPORTED_RELIABILITY_VERSIONS:
+        raise ValueError(f"Unsupported Syntax Reliability version: {version}")
+
+
+def _v1_3_flags(
+    sentence: Doc | Span,
+    finite_heads: list[Token],
+) -> list[str]:
+    words = sentence_words(sentence)
+    finite_head_indexes = {token.i for token in finite_heads}
+    flags = []
+
+    if count_bare_gerund_pcomp(words) > 0:
+        flags.append("bare_gerund_pcomp")
+
+    if count_finite_acl_without_subject(words, finite_head_indexes) > 0:
+        flags.append("finite_acl_without_subject")
+
+    if count_modal_on_nonverbal_head(words) > 0:
+        flags.append("modal_on_nonverbal_head")
+
+    return flags
+
+
 def detect_reliability_flags(
     sentence: Doc | Span,
     clause_summary: dict[str, object],
+    version: str = RELIABILITY_VERSION,
 ) -> list[str]:
     """Return structural warnings without assigning a reliability category."""
-    # Syntax Reliability v1.2 is frozen on Clause Detection v2.1.
+    _check_reliability_version(version)
+    # Syntax Reliability v1.2 and v1.3 are frozen on Clause Detection v2.1.
     clause_summary = frozen_clause_summary(sentence, clause_summary)
     flags = []
     finite_heads = _heads_in_sentence(
@@ -1061,6 +1113,9 @@ def detect_reliability_flags(
     if _has_nonverbal_root_finite_auxiliary_conflict(sentence):
         flags.append("nonverbal_root_finite_auxiliary_conflict")
 
+    if version == "1.3":
+        flags.extend(_v1_3_flags(sentence, finite_heads))
+
     return flags
 
 
@@ -1077,7 +1132,7 @@ def _classify_reliability(
     for flag in flags:
         if flag in STRONG_SIGNALS:
             strong_signal_count += 1
-        elif flag in WARNING_SIGNALS:
+        elif flag in WARNING_SIGNALS or flag in V1_3_WARNING_SIGNALS:
             warning_signal_count += 1
 
     if strong_signal_count > 0:
@@ -1095,6 +1150,7 @@ def _classify_reliability(
 def assess_sentence_reliability(
     sentence: Doc | Span,
     clause_summary: dict[str, object],
+    version: str = RELIABILITY_VERSION,
 ) -> dict[str, object]:
     """Assess whether syntax metrics for one parsed sentence are reliable."""
     clause_summary = frozen_clause_summary(sentence, clause_summary)
@@ -1108,7 +1164,7 @@ def assess_sentence_reliability(
         clause_summary,
         "non_finite_heads",
     )
-    flags = detect_reliability_flags(sentence, clause_summary)
+    flags = detect_reliability_flags(sentence, clause_summary, version)
     is_analyzable = _is_structurally_analyzable(
         sentence,
         finite_heads,
@@ -1167,6 +1223,7 @@ def _essay_reliability_category(
 def assess_syntax_reliability(
     document: Doc | Span,
     clause_summary: dict[str, object],
+    version: str = RELIABILITY_VERSION,
 ) -> dict[str, object]:
     """Aggregate sentence reliability without rerunning syntax analysis."""
     clause_summary = frozen_clause_summary(document, clause_summary)
@@ -1185,6 +1242,7 @@ def assess_syntax_reliability(
         sentence_result = assess_sentence_reliability(
             sentence,
             clause_summary,
+            version,
         )
         reliability = sentence_result["reliability"]
 

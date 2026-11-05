@@ -22,7 +22,12 @@ DATASET_DIRECTORY = PROJECT_ROOT / "data" / "syntax_reliability"
 
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.cell_pilot_evaluation import wilson_interval  # noqa: E402
+from src.cell_annotation import SentenceParser  # noqa: E402
+from src.cell_pilot_evaluation import (  # noqa: E402
+    heuristic_verdicts,
+    wilson_interval,
+)
+from src.nlp.pipeline import nlp  # noqa: E402
 from src.reliability_development_set import (  # noqa: E402
     LOCK_RELATIVE_PATH,
     load_batches,
@@ -58,6 +63,7 @@ def load_observations():
 
     observations = []
     batch_ids = []
+    candidate_verdicts = {}
     for batch in load_batches(DATASET_DIRECTORY):
         batch_observations = prepare_essay_context_observations(
             batch["essays"],
@@ -67,14 +73,29 @@ def load_observations():
         observations.extend(batch_observations)
         batch_ids.extend([batch["batch_id"]] * len(batch_observations))
 
-    return observations, np.asarray(batch_ids, dtype=str)
+        parser = SentenceParser(
+            nlp,
+            {essay["essay_id"]: essay for essay in batch["essays"]},
+        )
+        candidate_verdicts.update(
+            heuristic_verdicts(batch["annotations"], parser, "1.3")
+        )
+
+    v13_reliability = [
+        candidate_verdicts[observation["sentence_id"]]
+        for observation in observations
+    ]
+    return (
+        observations,
+        np.asarray(batch_ids, dtype=str),
+        warning_with_abstentions(v13_reliability),
+    )
 
 
-def frozen_warning_with_abstentions(observations):
-    """Return v1.2 warning predictions, -1 where the heuristic abstained."""
+def warning_with_abstentions(reliabilities):
+    """Return warning predictions, -1 where the heuristic abstained."""
     predictions = []
-    for observation in observations:
-        reliability = observation["frozen_reliability"]
+    for reliability in reliabilities:
         if reliability == "not_analyzable":
             predictions.append(-1)
         else:
@@ -151,7 +172,7 @@ def oof_arrays(result):
 
 
 def main() -> None:
-    observations, batch_ids = load_observations()
+    observations, batch_ids, v13 = load_observations()
     targets = observation_targets(observations)
 
     if dict(Counter(targets.tolist())) != EXPECTED_TARGET_COUNTS:
@@ -184,7 +205,11 @@ def main() -> None:
             estimator=build_dummy_classifier(),
         )
     )
-    frozen = frozen_warning_with_abstentions(observations)
+    frozen = warning_with_abstentions(
+        [observation["frozen_reliability"] for observation in observations]
+    )
+    if not np.array_equal(v13 < 0, frozen < 0):
+        raise SystemExit("v1.3 and v1.2 abstain on different sentences")
 
     print(
         f"Observations: {len(observations)} "
@@ -221,6 +246,7 @@ def main() -> None:
         ("Model B (structural+signals)", *model_b),
         ("Model C (B+error patterns)", *model_c),
         ("Frozen v1.2 warning", frozen, None),
+        ("Candidate v1.3 warning", v13, None),
     )
     compared = frozen >= 0
     print_table(
@@ -261,6 +287,7 @@ def main() -> None:
     nested_systems = (
         *threshold_systems,
         ("Frozen v1.2 warning", frozen, None),
+        ("Candidate v1.3 warning", v13, None),
     )
     print_table(
         "Nested thresholds, v1.2 not abstained",

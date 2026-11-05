@@ -10,7 +10,10 @@ from src.syntax.complexity import (
     _calculate_dependency_tree_depths,
     _calculate_mean_dependency_distance,
 )
-from src.syntax.reliability import detect_reliability_flags
+from src.syntax.reliability import (
+    FROZEN_RELIABILITY_VERSION,
+    detect_reliability_flags,
+)
 
 
 FEATURE_SCHEMA_VERSION = "1.0"
@@ -369,7 +372,11 @@ def _extract_heuristic_signal_features(
     sentence: Doc | Span,
     clause_summary: dict[str, object],
 ) -> dict[str, int | float]:
-    detected_flags = detect_reliability_flags(sentence, clause_summary)
+    detected_flags = detect_reliability_flags(
+        sentence,
+        clause_summary,
+        FROZEN_RELIABILITY_VERSION,
+    )
     allowed_detected_flags = set()
 
     for flag in detected_flags:

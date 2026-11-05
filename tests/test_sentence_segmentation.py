@@ -75,5 +75,6 @@ def test_analysis_records_processing_versions():
     assert result["processing_versions"] == {
         "sentence_segmentation": "2",
         "clause_detection": "2.2",
+        "syntax_reliability": "1.3",
     }
     assert result["input_summary"]["sentence_count"] == 2

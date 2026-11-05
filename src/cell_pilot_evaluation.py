@@ -15,7 +15,10 @@ import math
 import numpy as np
 
 from src.syntax.clauses import detect_clauses
-from src.syntax.reliability import assess_sentence_reliability
+from src.syntax.reliability import (
+    FROZEN_RELIABILITY_VERSION,
+    assess_sentence_reliability,
+)
 from src.syntax.reliability_ml import (
     POSITIVE_CLASS,
     calculate_binary_metrics,
@@ -42,8 +45,15 @@ OPERATING_POINTS = {
 WILSON_Z_95 = 1.959964
 
 
-def heuristic_verdicts(records, parser) -> dict[str, str]:
-    """Return frozen v1.2 reliability per sentence_id in essay context."""
+def heuristic_verdicts(
+    records,
+    parser,
+    version: str = FROZEN_RELIABILITY_VERSION,
+) -> dict[str, str]:
+    """Return heuristic reliability per sentence_id in essay context.
+
+    The pilot labels are scored against frozen v1.2 by default.
+    """
     clause_summaries = {}
     verdicts = {}
 
@@ -58,6 +68,7 @@ def heuristic_verdicts(records, parser) -> dict[str, str]:
         result = assess_sentence_reliability(
             parser.sentence(record),
             clause_summaries[essay_id],
+            version,
         )
         verdicts[record["sentence_id"]] = result["reliability"]
 

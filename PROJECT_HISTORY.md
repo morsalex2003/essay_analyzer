@@ -1181,3 +1181,44 @@ evaluated on. No feature, model, or threshold was changed after the run;
 ML v1, the CELL pilot evaluation, and the development set lock reproduce
 unchanged. The holdout remains unopened.
 
+## Syntax Reliability v1.3
+
+### Decision
+
+Promoted the three error-pattern features that never fired on a usable
+development sentence to `WARNING_SIGNALS` of a new heuristic version:
+`bare_gerund_pcomp`, `finite_acl_without_subject`, and
+`modal_on_nonverbal_head`. They are detected with the schema 2.0 feature
+code, so feature and signal cannot drift apart. Like the other warnings,
+each one alone gives `medium`. The other six patterns were not promoted:
+they fired on usable sentences or only once.
+
+`detect_reliability_flags()`, `assess_sentence_reliability()`, and
+`assess_syntax_reliability()` take a `version` argument (default "1.3").
+Frozen callers pass "1.2" explicitly: feature schema 1.0, Reliability ML
+observations, and the CELL pilot evaluation. `analyze_writing()` uses v1.3
+and records `processing_versions["syntax_reliability"]`. Both versions run
+on Clause Detection v2.1, so the heuristic change is not mixed with v2.2.
+
+### Results
+
+On the 600 development sentences where the heuristic did not abstain (96
+`UNRELIABLE`; abstentions are identical across versions):
+
+| Version | Precision (95% CI) | Recall (95% CI) | F1 | TP | FP |
+|---|---|---|---|---|---|
+| v1.2 | 0.869 (0.762-0.932) | 0.552 (0.453-0.648) | 0.675 | 53 | 8 |
+| v1.3 | 0.882 (0.785-0.939) | 0.625 (0.525-0.715) | 0.732 | 60 | 8 |
+
+All seven extra true positives are CELL pilot sentences (recall 0.415 to
+0.547); on Dataset v1 v1.3 gives exactly the v1.2 result.
+
+### Boundaries
+
+The signals were chosen from the pilot errors they now catch, so the pilot
+gain is an optimistic, in-sample estimate. Dataset v1, which they were not
+designed on, shows neither gain nor harm, which is weak evidence because the
+patterns never occur there. A fair estimate needs the untouched holdout.
+ML v1, the CELL pilot evaluation, and the development set lock reproduce
+unchanged.
+

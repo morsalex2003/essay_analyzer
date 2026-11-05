@@ -4,7 +4,8 @@ Schema 2.0 is schema 1.0 plus the features below. Each one describes a
 structural misparse mechanism from the CELL pilot error analysis
 (data/syntax_reliability/external/cell/pilot_v1_error_analysis.md) that
 schema 1.0 cannot see. None needs a lexicon, and none reads labels or the
-final reliability verdict.
+final reliability verdict. Syntax Reliability v1.3 reuses three of them
+as warning signals.
 
 Like schema 1.0, the features are frozen on Clause Detection v2.1.
 """
@@ -50,7 +51,7 @@ VERBAL_POS = ("VERB", "AUX")
 RELATIVE_TAGS = ("WDT", "WP", "WP$", "WRB")
 
 
-def _words(sentence: Doc | Span) -> list[Token]:
+def sentence_words(sentence: Doc | Span) -> list[Token]:
     return [token for token in sentence if not token.is_space]
 
 
@@ -141,7 +142,7 @@ def _nominal_clause_head_with_subject(words: list[Token]) -> int:
     )
 
 
-def _bare_gerund_pcomp(words: list[Token]) -> int:
+def count_bare_gerund_pcomp(words: list[Token]) -> int:
     return sum(
         token.dep_ == "pcomp"
         and token.tag_ == "VBG"
@@ -150,7 +151,7 @@ def _bare_gerund_pcomp(words: list[Token]) -> int:
     )
 
 
-def _finite_acl_without_subject(
+def count_finite_acl_without_subject(
     words: list[Token],
     finite_heads: set[int],
 ) -> int:
@@ -166,7 +167,7 @@ def _finite_acl_without_subject(
     )
 
 
-def _modal_on_nonverbal_head(words: list[Token]) -> int:
+def count_modal_on_nonverbal_head(words: list[Token]) -> int:
     """Modals attached to a non-verbal, non-root head without a copula."""
 
     return sum(
@@ -188,7 +189,7 @@ def extract_error_pattern_features(
     finite_heads = {
         token.i for token in clause_summary["finite_clause_heads"]
     }
-    words = _words(sentence)
+    words = sentence_words(sentence)
 
     return {
         "internal_line_break": _internal_line_break(sentence),
@@ -203,9 +204,9 @@ def extract_error_pattern_features(
         "nominal_clause_head_with_subject": _nominal_clause_head_with_subject(
             words
         ),
-        "bare_gerund_pcomp": _bare_gerund_pcomp(words),
-        "finite_acl_without_subject": _finite_acl_without_subject(
+        "bare_gerund_pcomp": count_bare_gerund_pcomp(words),
+        "finite_acl_without_subject": count_finite_acl_without_subject(
             words, finite_heads
         ),
-        "modal_on_nonverbal_head": _modal_on_nonverbal_head(words),
+        "modal_on_nonverbal_head": count_modal_on_nonverbal_head(words),
     }

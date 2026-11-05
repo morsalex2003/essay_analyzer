@@ -71,9 +71,13 @@ One spaCy `Doc` is created per text and reused by every component.
   ratio based on finite dependent clauses only.
 
 **Syntax reliability**
-- Rule-based consistency checks (v1.2) that flag sentences whose parse likely
+- Rule-based consistency checks (v1.3) that flag sentences whose parse likely
   misrepresents the clause inventory or hierarchy. Categories (HIGH, MEDIUM,
-  LOW) are engineering heuristics, not probabilities.
+  LOW) are engineering heuristics, not probabilities. v1.3 adds three
+  warnings from the CELL pilot error analysis: a bare gerund after a
+  preposition, a finite-classified reduced clause without a subject, and a
+  modal attached to a non-verbal head. Datasets, the CELL pilot, feature
+  schema 1.0, and Reliability ML keep frozen v1.2.
 - A structural feature schema (44 features + 19 heuristic signals) and a
   logistic-regression development baseline. See
   [Methodology notes](#methodology-notes).
@@ -209,6 +213,13 @@ Adding nine error-pattern features from the pilot error analysis (feature
 schema 2.0, `src/syntax/reliability_error_features.py`) made the model worse
 (Model C average precision 0.577 against 0.716): the patterns are rare, and
 after standardisation a single occurrence dominates the logistic model.
+
+The three most precise of these patterns became warning signals in
+Syntax Reliability v1.3. On the same 600 sentences v1.3 reaches precision
+0.882 and recall 0.625 (v1.2: 0.869 and 0.552) with no new false warnings;
+all seven extra catches are in the CELL pilot the patterns were taken from,
+and Dataset v1 is unchanged. This is an optimistic development estimate
+until the holdout is evaluated.
 
 **Reference annotations.** Existing sentence-level reliability labels are
 provisional model-assisted reference annotations, not independent human gold.

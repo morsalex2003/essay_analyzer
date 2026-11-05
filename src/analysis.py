@@ -21,6 +21,7 @@ from src.nlp.segmentation import SENTENCE_SEGMENTATION_VERSION
 from src.syntax.clauses import CLAUSE_DETECTOR_VERSION, detect_clauses
 from src.syntax.complexity import analyze_syntax_document
 from src.syntax.reliability import (
+    RELIABILITY_VERSION,
     assess_sentence_reliability,
     assess_syntax_reliability,
 )
@@ -250,6 +251,7 @@ def analyze_writing(
         "processing_versions": {
             "sentence_segmentation": SENTENCE_SEGMENTATION_VERSION,
             "clause_detection": CLAUSE_DETECTOR_VERSION,
+            "syntax_reliability": RELIABILITY_VERSION,
         },
         "task_context": copy_task_context(task_context),
         "input_summary": {
