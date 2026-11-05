@@ -11,6 +11,11 @@ from scripts.build_cell_annotation_packet import (
     instructions_text,
     sentence_sheet,
 )
+from scripts.review_cell_annotation_labels import (
+    apply_review_rows,
+    review_positions,
+    review_rows,
+)
 from src.cell_annotation import SentenceParser, load_annotation_enums
 from src.cell_pilot import select_pilot_students
 from src.nlp.pipeline import nlp
@@ -156,4 +161,77 @@ def test_label_rows_refuse_mismatch_and_overwrite():
             "sealed_test",
             BINARY_MAPPING,
             ENUMS,
+        )
+
+
+def _labelled(labels):
+    records = []
+    for position, label in enumerate(labels, start=1):
+        records.append(
+            {
+                "sentence_id": f"essay_1:s{position:04d}",
+                "essay_id": "essay_1",
+                "manual_label": label,
+                "usable_binary_label": BINARY_MAPPING[label],
+                "manual_failure_types": [],
+                "abstention_status": "none",
+                "annotation_notes": None,
+                "annotation_origin": "model_assisted_manual_review",
+                "annotator_id": "sealed_test",
+                "adjudication_status": "single",
+            }
+        )
+    return records
+
+
+def test_review_takes_all_non_reliable_and_a_seeded_sample():
+    labels = ["RELIABLE"] * 10 + ["UNRELIABLE", "MOSTLY_RELIABLE"]
+    records = _labelled(labels)
+
+    first = review_positions(records, reliable_sample_size=3, seed=7)
+    second = review_positions(records, reliable_sample_size=3, seed=7)
+
+    assert first == second
+    assert {11, 12} <= set(first)
+    assert len(first) == 5
+
+
+def test_review_refuses_unlabelled_batch():
+    records = _labelled(["RELIABLE"])
+    records[0]["manual_label"] = None
+
+    with pytest.raises(ValueError, match="labelled"):
+        review_positions(records, 1, 7)
+
+
+def test_review_confirms_and_changes_labels():
+    records = _labelled(["RELIABLE", "UNRELIABLE"])
+    rows = review_rows(records, [1, 2])
+    rows[0]["decision"] = "change"
+    rows[0]["new_label"] = "MOSTLY_RELIABLE"
+    rows[0]["new_failure_types"] = "major_dependency_structure"
+    rows[1]["decision"] = "confirm"
+    rows = [{key: str(value) for key, value in row.items()} for row in rows]
+
+    counts = apply_review_rows(
+        records, rows, "owner", "2026-11-05", BINARY_MAPPING, ENUMS
+    )
+
+    assert counts == {"confirm": 1, "change": 1}
+    assert records[0]["manual_label"] == "MOSTLY_RELIABLE"
+    assert records[0]["pre_adjudication_label"] == "RELIABLE"
+    assert records[1]["adjudication_status"] == "adjudicated"
+    assert records[1]["adjudicator_id"] == "owner"
+
+
+def test_review_rejects_unknown_decision():
+    records = _labelled(["RELIABLE"])
+    rows = [
+        {key: str(value) for key, value in row.items()}
+        for row in review_rows(records, [1])
+    ]
+
+    with pytest.raises(ValueError, match="confirm or change"):
+        apply_review_rows(
+            records, rows, "owner", "2026-11-05", BINARY_MAPPING, ENUMS
         )

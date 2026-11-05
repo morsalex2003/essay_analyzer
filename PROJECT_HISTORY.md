@@ -1256,3 +1256,28 @@ The holdout is not opened: no holdout batch exists yet, and the plan was
 committed before it is prepared. With few expected v1.3 pattern sentences,
 the plan states in advance that an inconclusive result is likely.
 
+## CELL Holdout Batch and Evaluation Code
+
+### Decision
+
+Prepared the holdout batch from the committed plan: 25 holdout students, 25
+essays, 295 sentences (fewer than 300 because some essays are short), all
+with the `untouched_holdout` role and none in development. A blind packet
+was built, and a separate session labels it as `claude_sealed_holdout_v1`
+and then reviews the labels with the owner. This session read only counts.
+
+Added `scripts/review_cell_annotation_labels.py` for the owner review and
+wrote the evaluation code before any holdout label exists:
+`src/cell_holdout_evaluation.py` (metrics with Wilson intervals, exact
+McNemar comparisons with v1.2, recall by failure type, metrics by
+adjudication status, and the plan's v1.3 decision rule) and
+`scripts/evaluate_cell_holdout.py` (label lock, opening record, single
+evaluation run). Model B is refit on the 606 development observations; its
+`heuristic_precision` threshold, computed from development data only, is
+0.9238 (development v1.2 precision 0.869).
+
+### Boundaries
+
+The holdout is not yet opened: no label is locked and no prediction has
+been compared with a label.
+

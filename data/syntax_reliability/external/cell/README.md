@@ -128,3 +128,13 @@ sheet; no heuristic or ML output) for a separate labelling session, and
 `scripts/apply_cell_annotation_labels.py` writes the filled sheet to the
 ledger, printing counts only.
 
+The holdout batch has 25 students, 25 essays, and 295 sentences (some
+essays have fewer than 12 sentences); `holdout_v1_report.json` holds its
+aggregate composition. `scripts/review_cell_annotation_labels.py` builds the
+owner review sheet and records the decisions. `scripts/evaluate_cell_holdout.py`
+then runs the plan's last steps in order: `--lock-labels` (ledger hash),
+`--record-opening --reason ...` (opening date and reason in
+`split_v1.json`), and `--evaluate`, which checks both locks and the opening
+record, scores v1.2, v1.3, and Model B once, and refuses to overwrite
+`holdout_v1_evaluation.json`.
+

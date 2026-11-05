@@ -1,0 +1,86 @@
+{
+  "annotation_status": "not_started",
+  "counts": {
+    "essays": 25,
+    "sentences": 295,
+    "students": 25
+  },
+  "data_role": "untouched_holdout",
+  "essay_metadata_coverage": {
+    "courses": {
+      "edue100f": 1,
+      "edue215f": 1,
+      "edue220f": 1,
+      "edue253f": 2,
+      "edue254f": 1,
+      "edue365f": 1,
+      "edue400f": 1,
+      "edue472f": 1,
+      "engle101f": 1,
+      "engle102f": 5,
+      "engle210f": 1,
+      "engle230f": 1,
+      "engle300f": 1,
+      "engle339f": 1,
+      "engle360f": 1,
+      "engle366f": 1,
+      "engle372f": 1,
+      "gene141f": 1,
+      "gene242f": 1,
+      "gene243f": 1
+    },
+    "periods": {
+      "2018_01": 1,
+      "2018_09": 6,
+      "2019_01": 1,
+      "2019_06": 1,
+      "2019_09": 5,
+      "2020_01": 8,
+      "2020_06": 3
+    }
+  },
+  "holdout_opened": false,
+  "pilot_version": "cell_reliability_holdout_v1",
+  "privacy": {
+    "learner_text_in_report": false,
+    "private_paths_in_report": false,
+    "raw_git_status": "ignored_untracked",
+    "source_hashes_in_report": false,
+    "student_ids_in_report": false
+  },
+  "provenance": {
+    "clause_detector_version": "2.1",
+    "reliability_version": "1.2",
+    "repository_commit": "7a43035efdca168964bdea36b0a4c427fccd6627",
+    "spacy_model_name": "en_core_web_sm",
+    "spacy_model_version": "3.8.0",
+    "spacy_version": "3.8.13",
+    "structural_feature_schema_version": "1.0"
+  },
+  "seed": 20261105,
+  "selection_excluded_inputs": [
+    "reliability_labels",
+    "parser_error_review",
+    "model_predictions",
+    "quality",
+    "word_count",
+    "duplicate_flags"
+  ],
+  "selection_inputs": [
+    "student_id",
+    "period",
+    "course_id",
+    "essays_per_student_bin",
+    "parser_derived_structural_features"
+  ],
+  "structural_coverage": {
+    "ccomp_xcomp": 69,
+    "coordination": 100,
+    "finite_subordination": 89,
+    "modal_auxiliary": 130,
+    "nonfinite_predicative": 100,
+    "punctuation_linked": 127,
+    "relative_clause": 40,
+    "simple_control": 83
+  }
+}
