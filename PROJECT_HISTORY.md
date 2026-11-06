@@ -1495,6 +1495,42 @@ holdout text or labels; scripts printed counts only. The report is
   (5 of 23 caught), then finite inventory (13 of 27).
 - 37 holdout students remain untouched.
 
+## Rejected: Second-Parser Disagreement Warning
+
+### Idea
+
+After holdout v2, non-finite inventory errors are the largest recall gap
+(5 of 23 caught). Since a lexical rule failed, the next idea was a second
+parser: run `en_core_web_md` 3.8.0 on the same essay and warn when it
+disagrees with the frozen `en_core_web_sm` parse. The labels judge the sm
+parse, so md is used only as evidence, never as a replacement parser.
+
+### Result (development set, checked before any code change)
+
+The 600 development sentences where v1.2 gives a verdict (96 unreliable;
+v1.4 catches 65 with 8 false warnings). Both parsers tokenise identically,
+so tokens are compared by index. New catches and new false warnings are
+counted only where v1.4 does not warn yet:
+
+| Signal | Fires | New catches | New false warnings |
+|---|---|---|---|
+| sm VERB/AUX, md NOUN/PROPN/ADJ/NUM | 19 | 1 | 8 |
+| same, sm token a clausal dependent | 5 | 1 | 2 |
+| sm nominal, md VERB | 42 | 2 | 26 |
+| clausal dependency label differs | 73 | 9 | 34 |
+
+md disagrees with sm on only 5 of the 14 non-finite errors v1.4 misses:
+the two models are trained on the same data and mostly make the same
+mistakes. The broadest signal would add warnings that are about 21%
+precise against 89% for v1.4.
+
+### Decision
+
+No signal was added and `en_core_web_md` is not a project dependency.
+Agreement between two models of one family is not independent evidence. A
+parser trained differently (for example a transformer model) would be the
+next candidate, at a much higher installation and runtime cost.
+
 ## Private-Data Guards for Commits and Agents
 
 ### Problem
