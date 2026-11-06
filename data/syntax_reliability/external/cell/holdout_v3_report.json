@@ -1,0 +1,84 @@
+{
+  "annotation_status": "not_started",
+  "counts": {
+    "essays": 37,
+    "sentences": 444,
+    "students": 37
+  },
+  "data_role": "untouched_holdout",
+  "essay_metadata_coverage": {
+    "courses": {
+      "edue219f": 1,
+      "edue220f": 4,
+      "edue253f": 3,
+      "edue254f": 1,
+      "edue365f": 1,
+      "edue400f": 1,
+      "edue472f": 1,
+      "engle101f": 4,
+      "engle102f": 9,
+      "engle200f": 1,
+      "engle210f": 1,
+      "engle230f": 1,
+      "engle300f": 2,
+      "engle320f": 2,
+      "engle339f": 1,
+      "engle360f": 1,
+      "engle366f": 1,
+      "engle372f": 2
+    },
+    "periods": {
+      "2018_01": 2,
+      "2018_09": 7,
+      "2019_01": 7,
+      "2019_06": 3,
+      "2019_09": 10,
+      "2020_01": 8
+    }
+  },
+  "excluded_students": 61,
+  "holdout_opened": false,
+  "pilot_version": "cell_reliability_holdout_v3",
+  "privacy": {
+    "learner_text_in_report": false,
+    "private_paths_in_report": false,
+    "raw_git_status": "ignored_untracked",
+    "source_hashes_in_report": false,
+    "student_ids_in_report": false
+  },
+  "provenance": {
+    "clause_detector_version": "2.1",
+    "reliability_version": "1.2",
+    "repository_commit": "99ed3bc44a7bdd473ad98dcb4783759938a1d735",
+    "spacy_model_name": "en_core_web_sm",
+    "spacy_model_version": "3.8.0",
+    "spacy_version": "3.8.13",
+    "structural_feature_schema_version": "1.0"
+  },
+  "seed": 20261107,
+  "selection_excluded_inputs": [
+    "reliability_labels",
+    "parser_error_review",
+    "model_predictions",
+    "quality",
+    "word_count",
+    "duplicate_flags"
+  ],
+  "selection_inputs": [
+    "student_id",
+    "period",
+    "course_id",
+    "essays_per_student_bin",
+    "parser_derived_structural_features"
+  ],
+  "structural_coverage": {
+    "ccomp_xcomp": 92,
+    "coordination": 148,
+    "finite_subordination": 133,
+    "modal_auxiliary": 213,
+    "nonfinite_predicative": 136,
+    "punctuation_linked": 201,
+    "relative_clause": 55,
+    "simple_control": 136
+  }
+}
