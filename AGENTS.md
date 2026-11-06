@@ -82,6 +82,14 @@ After changing analysis logic:
 - Keep changes focused on the requested task.
 - Do not push or commit unless explicitly asked.
 - Before committing, summarize the changes.
+- Before committing changes to `src/`, `scripts/`, `tests/`, or evaluation
+  plans and protocols (`*_plan.json`, `split_v1.json`,
+  `development_set_v1.json`), run the `reviewer` subagent
+  (`.claude/agents/reviewer.md`) on the uncommitted changes. Fix what it
+  reports before committing; if you disagree with a point, say so in the
+  commit summary instead of dropping it silently. Commits that touch only
+  documentation or aggregate reports skip the reviewer; the pre-commit hook
+  still checks them.
 
 ## Working style
 

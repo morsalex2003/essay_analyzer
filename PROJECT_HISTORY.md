@@ -1487,6 +1487,14 @@ instructions would still publish them.
   (AGENTS.md rules, private data, frozen components) for use before a
   commit.
 
+When the reviewer runs: AGENTS.md requires it before commits that change
+`src/`, `scripts/`, `tests/`, or evaluation plans and protocols, where a
+fresh reader catches what a long session misses (logic changes, frozen
+components, plans edited after they were fixed). Commits with only
+documentation or aggregate reports skip it, because the pre-commit hook
+already covers their main risk and a routine `OK` would teach readers to
+ignore the reviewer.
+
 ### Not adopted
 
 A fixed agent chain (engineer, test runner, reviewer, history keeper) for
