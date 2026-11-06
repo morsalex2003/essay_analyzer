@@ -259,7 +259,11 @@ def test_frozen_split_v1_counts_and_author_separation() -> None:
     assert artifact["seed"] == 20260824
     assert artifact["role_assigned_at"] == "2026-08-24"
     assert artifact["freeze_status"] == "source_frozen"
-    assert artifact["holdout_opened_at"] is None
+    # Opened once for CELL holdout evaluation v1 (25 of the 98 students).
+    assert artifact["holdout_opened_at"] == "2026-11-06"
+    assert artifact["holdout_open_reason"].startswith(
+        "cell_reliability_holdout_v1:"
+    )
     assert artifact["counts"] == {
         "essays_development": 2195,
         "essays_total": 2857,

@@ -1281,3 +1281,61 @@ evaluation run). Model B is refit on the 606 development observations; its
 The holdout is not yet opened: no label is locked and no prediction has
 been compared with a label.
 
+---
+
+# 2026-11-06
+
+## CELL Holdout Evaluation v1
+
+### Procedure
+
+The separate labelling session labelled all 295 holdout sentences from the
+blind packet (`claude_sealed_holdout_v1`), and the owner reviewed 145 of
+them: every non-`RELIABLE` label and 40 sampled `RELIABLE` labels. The
+ledger was then locked by hash, the opening was recorded in `split_v1.json`
+(2026-11-06), and `scripts/evaluate_cell_holdout.py --evaluate` ran once.
+The aggregate report is `data/syntax_reliability/external/cell/
+holdout_v1_evaluation.json`. Nothing was changed after the run.
+
+### Results
+
+295 sentences: 17 `NOT_ANALYZABLE`, 1 v1.2 abstention, and 277 in the
+analysis set (54 `UNRELIABLE`, 223 usable).
+
+| System | Precision (95% CI) | Recall (95% CI) | F1 | TP | FP |
+|---|---|---|---|---|---|
+| Frozen v1.2 | 0.812 (0.570-0.934) | 0.241 (0.146-0.369) | 0.371 | 13 | 3 |
+| v1.3 | 0.824 (0.590-0.938) | 0.259 (0.161-0.389) | 0.394 | 14 | 3 |
+| Model B | 0.850 (0.640-0.948) | 0.315 (0.207-0.447) | 0.459 | 17 | 3 |
+
+Paired with v1.2: v1.3 adds 1 catch and no false warning (exact McNemar
+p = 1.0 on both classes); Model B adds 5 catches and loses 1 (p = 0.22) and
+swaps 2 false warnings for 2 others (p = 1.0). The pre-registered v1.3
+decision is **inconclusive**.
+
+v1.2 recall by failure type: dependent inventory 10 of 26, matrix hierarchy
+9 of 19, finite inventory 5 of 15, non-finite inventory 1 of 16, sentence
+segmentation 1 of 13, major dependency structure 1 of 5. All `UNRELIABLE`
+labels were reviewed, so the unreviewed (`single`) rows contain only usable
+sentences and their breakdown carries no recall information.
+
+### Interpretation
+
+Warnings stay precise on unseen students (about 0.8), but recall falls from
+0.552 on development data and 0.415 on the CELL pilot to 0.241. The largest
+gaps are sentence segmentation and non-finite inventory errors, which the
+frozen segmentation v1 and Clause Detection v2.1 do not address;
+segmentation v2 was built for the first but is not part of the evaluated
+systems. The v1.3 patterns are too rare to matter: one holdout sentence.
+Part of the recall drop may come from the labeller: the holdout labels come
+from a different, sealed session, with a higher `UNRELIABLE` share (54 of
+277, 19%) than in the pilot (14%), and the two cannot be separated here.
+
+### Consequences
+
+v1.2 stays the reference heuristic. `analyze_writing()` keeps v1.3, which
+did no harm on the holdout (one extra catch, no new false warning). The 25
+evaluated students are no longer untouched; any later untouched evaluation
+must use the other 73 holdout students. The main open problem is recall on
+segmentation and non-finite errors, not precision.
+

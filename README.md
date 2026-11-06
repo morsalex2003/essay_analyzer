@@ -221,6 +221,24 @@ all seven extra catches are in the CELL pilot the patterns were taken from,
 and Dataset v1 is unchanged. This is an optimistic development estimate
 until the holdout is evaluated.
 
+**Holdout evaluation (2026-11-06).** The plan fixed in
+`holdout_v1_evaluation_plan.json` was run once on 25 untouched CELL holdout
+students: 295 sentences labelled blind by a separate session and reviewed by
+the owner; 277 analyzable sentences where v1.2 gives a verdict, 54 of them
+unreliable.
+
+| System | Precision (95% CI) | Recall (95% CI) | FP |
+|---|---|---|---|
+| Frozen v1.2 | 0.812 (0.570-0.934) | 0.241 (0.146-0.369) | 3 |
+| v1.3 | 0.824 (0.590-0.938) | 0.259 (0.161-0.389) | 3 |
+| Model B (threshold 0.9238 from development) | 0.850 (0.640-0.948) | 0.315 (0.207-0.447) | 3 |
+
+v1.3 adds one catch and no false warning (McNemar p = 1.0), so the
+pre-registered result is inconclusive; Model B adds five catches and loses
+one (p = 0.22). Warnings remain precise, but most unreliable holdout
+sentences are not flagged: 1 of 13 segmentation errors and 1 of 16
+non-finite inventory errors are caught by v1.2.
+
 **Reference annotations.** Existing sentence-level reliability labels are
 provisional model-assisted reference annotations, not independent human gold.
 
@@ -232,8 +250,10 @@ Detailed decisions and their reasons are recorded in
 - No exam score or proficiency level is produced, by design.
 - spaCy `en_core_web_sm` is trained on mostly native-speaker text; learner
   errors can break parses, which is why the reliability layer exists.
-- Reliability rules and ML results have not been validated on independent
-  data.
+- Reliability rules and ML were evaluated once on independent data (25
+  untouched CELL holdout students, blind labels): every system finds far
+  fewer parser failures there than on development data (v1.2 recall 0.24,
+  development 0.55), mostly missing segmentation and non-finite errors.
 - Lexical and syntactic metrics are unstable on very short texts (for example,
   under about 150 words). Student and teacher reports add a
   `text_length_measurement` note below this threshold, and
