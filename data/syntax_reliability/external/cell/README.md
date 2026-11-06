@@ -138,3 +138,26 @@ then runs the plan's last steps in order: `--lock-labels` (ledger hash),
 record, scores v1.2, v1.3, and Model B once, and refuses to overwrite
 `holdout_v1_evaluation.json`.
 
+## Holdout evaluation v2
+
+The 25 holdout v1 students were opened on 2026-11-06. Every opening is
+listed in `holdout_openings` in `split_v1.json`; the older
+`holdout_opened_at` and `holdout_open_reason` fields keep the first opening
+of the holdout as a whole.
+
+`holdout_v2_evaluation_plan.json` fixes the second evaluation before any
+selection: 36 of the 73 remaining holdout students (12 sentences each, seed
+20261106), labelled blind by a new sealed session and reviewed by the owner.
+The primary question is whether Syntax Reliability v1.4 (the segmentation
+boundary warning) raises recall over v1.3; v1.3, v1.4, and Model B are also
+compared with v1.2. The other 37 holdout students stay untouched.
+
+The batch is prepared with
+`scripts/prepare_cell_reliability_pilot.py --role untouched_holdout --seed
+20261106 --students 36 --source-stage cell_reliability_holdout_v2
+--exclude-students-from .../local/holdout_v1/essays.jsonl --local-output
+.../local/holdout_v2 --report .../holdout_v2_report.json`, then packet,
+labels, and review follow the v1 steps. `scripts/evaluate_cell_holdout.py`
+takes `--batch v1` or `--batch v2`; each batch has its own label lock,
+opening record, and report.
+

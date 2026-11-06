@@ -1416,3 +1416,44 @@ evidence that a word cannot be a verb, and the remaining cases are too few
 to tune a narrower rule without overfitting the development set. Nouns
 parsed as verbs remain the main open recall gap; a stronger parser model is
 the more promising direction than lexical rules.
+
+## CELL Holdout Evaluation Plan v2
+
+### Why
+
+Syntax Reliability v1.4 was built on development data after holdout v1 was
+opened, so its gain (recall 0.677 against 0.625) is an in-sample estimate.
+Only the 73 holdout students outside holdout v1 can test it.
+
+### Plan (fixed before any selection)
+
+`data/syntax_reliability/external/cell/holdout_v2_evaluation_plan.json`:
+
+- 36 of the 73 untouched holdout students, 12 sentences each, selected with
+  the pilot procedure (seed 20261106) after excluding the holdout v1
+  students; the other 37 stay untouched for a later check.
+- Same parse (frozen segmentation v1, Clause Detection v2.1), guideline
+  1.2, blind packet, a new sealed labelling session
+  (`claude_sealed_holdout_v2`), and owner review of every non-`RELIABLE`
+  label plus 40 sampled `RELIABLE` labels.
+- Primary comparison: v1.4 against v1.3, which isolates the segmentation
+  warning. Secondary: v1.3, v1.4, and Model B (threshold rule as in v1)
+  against v1.2.
+- Decision: the warning is confirmed if its recall gain is significant
+  (exact McNemar p < 0.05) without significant new false warnings; a
+  negative result returns `analyze_writing()` to v1.3; anything else is
+  inconclusive. Holdout v1 and v2 are not pooled.
+
+### Code
+
+- `select_pilot_students(..., excluded_students=...)` and
+  `prepare_cell_reliability_pilot.py --exclude-students-from` skip students
+  of an opened batch; only the student IDs of that batch are read. Pilot v1
+  still reproduces byte for byte (apart from the commit hash).
+- `evaluate_holdout()` takes the candidate versions and the primary pair;
+  `evaluate_cell_holdout.py` takes `--batch v1|v2` with per-batch paths and
+  decision settings. Openings are recorded per batch in `holdout_openings`
+  in `split_v1.json`; holdout v1 was added to that list.
+- The generalised code reproduces the recorded holdout v1 report exactly
+  (checked by comparison only, without printing labels), with the same
+  Model B threshold 0.9238.

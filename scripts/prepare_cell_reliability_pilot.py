@@ -3,6 +3,8 @@
 Defaults reproduce CELL Reliability Pilot v1 from development students.
 With --role untouched_holdout it prepares the holdout batch with the same
 procedure; only counts and structural coverage are printed, never text.
+--exclude-students-from takes the essays.jsonl of an earlier batch whose
+students must not be selected again (an opened holdout batch).
 """
 
 from __future__ import annotations
@@ -96,7 +98,21 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--role", choices=SPLIT_ROLES, default="development")
     parser.add_argument("--seed", type=int, default=CELL_PILOT_SEED)
     parser.add_argument("--source-stage", default=SOURCE_STAGE)
+    parser.add_argument(
+        "--exclude-students-from",
+        type=Path,
+        action="append",
+        default=[],
+    )
     return parser.parse_args()
+
+
+def students_in_batch(essays_path: Path) -> set[str]:
+    """Read only the student IDs of an earlier batch's essays file."""
+    with essays_path.open(encoding="utf-8") as stream:
+        return {
+            json.loads(line)["student_id"] for line in stream if line.strip()
+        }
 
 
 def jsonl_write(path: Path, records: list[dict[str, object]]) -> None:
@@ -128,14 +144,20 @@ def main() -> None:
     arguments = parse_arguments()
     records = load_cell_manifest(arguments.manifest)
     roles = load_student_roles(arguments.split)
+    excluded_students = set()
+    for essays_path in arguments.exclude_students_from:
+        excluded_students |= students_in_batch(essays_path)
     selected_students = select_pilot_students(
         records,
         roles,
         student_count=arguments.students,
         seed=arguments.seed,
         role=arguments.role,
+        excluded_students=excluded_students,
     )
     selected_student_set = set(selected_students)
+    if selected_student_set & excluded_students:
+        raise RuntimeError("Selection reused an excluded student")
     selected_records = [
         record
         for record in records
@@ -353,6 +375,10 @@ def main() -> None:
         },
         "provenance": provenance_fields,
     }
+    if excluded_students:
+        # Only batches with exclusions get the key, so the pilot v1 report
+        # reproduces byte for byte.
+        report["excluded_students"] = len(excluded_students)
     arguments.report.parent.mkdir(parents=True, exist_ok=True)
     arguments.report.write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n",

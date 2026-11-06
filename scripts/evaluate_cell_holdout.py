@@ -1,14 +1,16 @@
-"""Lock, open, and evaluate CELL holdout v1 exactly once.
+"""Lock, open, and evaluate one CELL holdout batch exactly once.
 
-Steps, in order, as fixed in holdout_v1_evaluation_plan.json:
+`--batch v1` or `--batch v2` picks the batch; each follows its own
+holdout_<batch>_evaluation_plan.json. Steps, in order:
 
 1. --lock-labels: after labelling and owner review are complete, store the
    hash of the holdout ledger. Prints counts only.
-2. --record-opening --reason TEXT: write the opening date and reason into
-   split_v1.json.
+2. --record-opening --reason TEXT: add the opening date and reason to
+   `holdout_openings` in split_v1.json.
 3. --evaluate: check the label lock, the development set lock, and the
-   opening record, then score v1.2, v1.3, and Model B once and write the
-   aggregate report. An existing report is never replaced.
+   opening record, then score v1.2, the batch's candidate versions, and
+   Model B once and write the aggregate report. An existing report is never
+   replaced.
 """
 
 import argparse
@@ -56,25 +58,56 @@ from src.syntax.reliability_thresholds import (  # noqa: E402
 
 DATASET_DIRECTORY = PROJECT_ROOT / "data/syntax_reliability"
 CELL_DIRECTORY = DATASET_DIRECTORY / "external/cell"
-BATCH_DIRECTORY = CELL_DIRECTORY / "local/holdout_v1"
-LEDGER_PATH = BATCH_DIRECTORY / "annotations_v1.jsonl"
-REVIEW_PATH = BATCH_DIRECTORY / "packet/review.tsv"
-LABEL_LOCK_PATH = BATCH_DIRECTORY / "labels_lock.json"
 SPLIT_PATH = CELL_DIRECTORY / "split_v1.json"
-PLAN_PATH = CELL_DIRECTORY / "holdout_v1_evaluation_plan.json"
-REPORT_PATH = CELL_DIRECTORY / "holdout_v1_evaluation.json"
+
+# Systems and decision rule of each batch, as fixed in its plan.
+HOLDOUT_BATCHES = {
+    "v1": {
+        "batch_id": "cell_reliability_holdout_v1",
+        "candidates": ("1.3",),
+        "decision_pair": ("1.3", "1.2"),
+        "positive_outcome": "adopt_v1_3",
+    },
+    "v2": {
+        "batch_id": "cell_reliability_holdout_v2",
+        "candidates": ("1.3", "1.4"),
+        "decision_pair": ("1.4", "1.3"),
+        "positive_outcome": "confirm_v1_4",
+    },
+}
 
 
-def load_holdout_records() -> list[dict]:
-    template = load_jsonl(BATCH_DIRECTORY / "annotations_template.jsonl")
-    return merge_progress(template, load_jsonl(LEDGER_PATH))
+def batch_paths(batch: str) -> dict[str, Path]:
+    directory = CELL_DIRECTORY / f"local/holdout_{batch}"
+    return {
+        "directory": directory,
+        "ledger": directory / "annotations_v1.jsonl",
+        "review": directory / "packet/review.tsv",
+        "label_lock": directory / "labels_lock.json",
+        "plan": CELL_DIRECTORY / f"holdout_{batch}_evaluation_plan.json",
+        "report": CELL_DIRECTORY / f"holdout_{batch}_evaluation.json",
+    }
 
 
-def check_review_complete(records: list[dict]) -> int:
+def load_holdout_records(paths: dict[str, Path]) -> list[dict]:
+    template = load_jsonl(paths["directory"] / "annotations_template.jsonl")
+    return merge_progress(template, load_jsonl(paths["ledger"]))
+
+
+def opening_record(split: dict, batch_id: str) -> dict | None:
+    for opening in split.get("holdout_openings", []):
+        if opening["batch_id"] == batch_id:
+            return opening
+    return None
+
+
+def check_review_complete(
+    records: list[dict], review_path: Path
+) -> int:
     if any(record["manual_label"] is None for record in records):
         raise SystemExit("Not every holdout sentence is labelled")
 
-    with REVIEW_PATH.open(encoding="utf-8", newline="") as stream:
+    with review_path.open(encoding="utf-8", newline="") as stream:
         rows = list(csv.DictReader(stream, delimiter="\t"))
     reviewed = [int(row["position"]) for row in rows]
     for position in reviewed:
@@ -83,36 +116,46 @@ def check_review_complete(records: list[dict]) -> int:
     return len(reviewed)
 
 
-def lock_labels() -> None:
-    records = load_holdout_records()
-    reviewed = check_review_complete(records)
+def lock_labels(batch: str) -> None:
+    paths = batch_paths(batch)
+    records = load_holdout_records(paths)
+    reviewed = check_review_complete(records, paths["review"])
     lock = {
-        "batch_id": "cell_reliability_holdout_v1",
+        "batch_id": HOLDOUT_BATCHES[batch]["batch_id"],
         "locked_at": date.today().isoformat(),
-        "ledger_sha256": sha256_file(LEDGER_PATH),
+        "ledger_sha256": sha256_file(paths["ledger"]),
         "records": len(records),
         "reviewed": reviewed,
     }
-    with LABEL_LOCK_PATH.open("x", encoding="utf-8") as stream:
+    with paths["label_lock"].open("x", encoding="utf-8") as stream:
         json.dump(lock, stream, indent=2)
         stream.write("\n")
     print(f"Locked {len(records)} labels ({reviewed} reviewed)")
 
 
-def record_opening(reason: str) -> None:
-    if not LABEL_LOCK_PATH.exists():
+def record_opening(batch: str, reason: str) -> None:
+    if not batch_paths(batch)["label_lock"].exists():
         raise SystemExit("Lock the holdout labels before opening")
 
+    batch_id = HOLDOUT_BATCHES[batch]["batch_id"]
     split = json.loads(SPLIT_PATH.read_text())
-    if split["holdout_opened_at"] is not None:
+    if opening_record(split, batch_id) is not None:
         raise SystemExit("The holdout opening is already recorded")
 
-    split["holdout_opened_at"] = date.today().isoformat()
-    split["holdout_open_reason"] = reason
+    opening = {
+        "batch_id": batch_id,
+        "opened_at": date.today().isoformat(),
+        "reason": reason,
+    }
+    split.setdefault("holdout_openings", []).append(opening)
+    if split.get("holdout_opened_at") is None:
+        # The first opening of the holdout as a whole.
+        split["holdout_opened_at"] = opening["opened_at"]
+        split["holdout_open_reason"] = reason
     SPLIT_PATH.write_text(
         json.dumps(split, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
-    print("Recorded holdout opening:", split["holdout_opened_at"])
+    print("Recorded holdout opening:", opening["opened_at"])
 
 
 def model_b_predictions(holdout_essays, holdout_records):
@@ -156,12 +199,14 @@ def model_b_predictions(holdout_essays, holdout_records):
     return predictions, threshold
 
 
-def evaluate() -> None:
-    if REPORT_PATH.exists():
+def evaluate(batch: str) -> None:
+    paths = batch_paths(batch)
+    settings = HOLDOUT_BATCHES[batch]
+    if paths["report"].exists():
         raise SystemExit("The holdout was already evaluated once")
 
-    lock = json.loads(LABEL_LOCK_PATH.read_text())
-    if sha256_file(LEDGER_PATH) != lock["ledger_sha256"]:
+    lock = json.loads(paths["label_lock"].read_text())
+    if sha256_file(paths["ledger"]) != lock["ledger_sha256"]:
         raise SystemExit("Holdout labels changed after locking")
 
     development_lock = json.loads(
@@ -171,29 +216,37 @@ def evaluate() -> None:
         raise SystemExit("The development set changed")
 
     split = json.loads(SPLIT_PATH.read_text())
-    if split["holdout_opened_at"] is None:
+    opening = opening_record(split, settings["batch_id"])
+    if opening is None:
         raise SystemExit("Record the holdout opening first")
 
-    records = load_holdout_records()
-    essays = load_jsonl(BATCH_DIRECTORY / "essays.jsonl")
+    records = load_holdout_records(paths)
+    essays = load_jsonl(paths["directory"] / "essays.jsonl")
     parser = SentenceParser(
         nlp, {essay["essay_id"]: essay for essay in essays}
     )
     verdicts = {
         version: heuristic_verdicts(records, parser, version)
-        for version in ("1.2", "1.3")
+        for version in ("1.2", *settings["candidates"])
     }
     model_b, threshold = model_b_predictions(essays, records)
 
     report = {
-        "plan": PLAN_PATH.relative_to(PROJECT_ROOT).as_posix(),
+        "plan": paths["plan"].relative_to(PROJECT_ROOT).as_posix(),
         "evaluated_at": date.today().isoformat(),
-        "holdout_opened_at": split["holdout_opened_at"],
+        "holdout_opened_at": opening["opened_at"],
         "label_lock_date": lock["locked_at"],
         "model_b_threshold": round(float(threshold), 4),
-        **evaluate_holdout(records, verdicts, model_b),
+        **evaluate_holdout(
+            records,
+            verdicts,
+            model_b,
+            candidates=settings["candidates"],
+            decision_pair=settings["decision_pair"],
+            positive_outcome=settings["positive_outcome"],
+        ),
     }
-    with REPORT_PATH.open("x", encoding="utf-8") as stream:
+    with paths["report"].open("x", encoding="utf-8") as stream:
         json.dump(report, stream, indent=2)
         stream.write("\n")
     print(json.dumps(report, indent=2))
@@ -201,6 +254,9 @@ def evaluate() -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--batch", choices=sorted(HOLDOUT_BATCHES), required=True
+    )
     step = parser.add_mutually_exclusive_group(required=True)
     step.add_argument("--lock-labels", action="store_true")
     step.add_argument("--record-opening", action="store_true")
@@ -209,13 +265,13 @@ def main() -> None:
     arguments = parser.parse_args()
 
     if arguments.lock_labels:
-        lock_labels()
+        lock_labels(arguments.batch)
     elif arguments.record_opening:
         if not arguments.reason:
             raise SystemExit("--record-opening needs --reason")
-        record_opening(arguments.reason)
+        record_opening(arguments.batch, arguments.reason)
     else:
-        evaluate()
+        evaluate(arguments.batch)
 
 
 if __name__ == "__main__":

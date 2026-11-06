@@ -123,6 +123,13 @@
   "freeze_status": "source_frozen",
   "holdout_open_reason": "cell_reliability_holdout_v1: single planned evaluation of Syntax Reliability v1.2, v1.3 and Reliability ML Model B on 25 holdout students per holdout_v1_evaluation_plan.json; these 25 students are no longer untouched",
   "holdout_opened_at": "2026-11-06",
+  "holdout_openings": [
+    {
+      "batch_id": "cell_reliability_holdout_v1",
+      "opened_at": "2026-11-06",
+      "reason": "cell_reliability_holdout_v1: single planned evaluation of Syntax Reliability v1.2, v1.3 and Reliability ML Model B on 25 holdout students per holdout_v1_evaluation_plan.json; these 25 students are no longer untouched"
+    }
+  ],
   "identity_fields": [
     "archive_path",
     "sha256"

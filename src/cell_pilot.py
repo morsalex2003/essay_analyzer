@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from collections import Counter
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
 
 from src.cell import CellManifestRecord
@@ -62,13 +62,20 @@ def select_pilot_students(
     student_count: int = CELL_PILOT_STUDENT_COUNT,
     seed: int = CELL_PILOT_SEED,
     role: str = "development",
+    excluded_students: Collection[str] = (),
 ) -> list[str]:
-    """Select students of one split role using structural metadata only."""
+    """Select students of one split role using structural metadata only.
 
+    `excluded_students` removes students that an earlier batch already
+    used, such as a holdout batch that has been opened.
+    """
+
+    excluded = set(excluded_students)
     role_records = [
         record
         for record in records
         if student_roles.get(record.student_id) == role
+        and record.student_id not in excluded
     ]
     essay_counts = Counter(record.student_id for record in role_records)
     student_features: dict[str, set[str]] = {}

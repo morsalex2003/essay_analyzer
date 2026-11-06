@@ -264,6 +264,13 @@ def test_frozen_split_v1_counts_and_author_separation() -> None:
     assert artifact["holdout_open_reason"].startswith(
         "cell_reliability_holdout_v1:"
     )
+    assert artifact["holdout_openings"] == [
+        {
+            "batch_id": "cell_reliability_holdout_v1",
+            "opened_at": "2026-11-06",
+            "reason": artifact["holdout_open_reason"],
+        }
+    ]
     assert artifact["counts"] == {
         "essays_development": 2195,
         "essays_total": 2857,

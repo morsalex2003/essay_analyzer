@@ -1,10 +1,11 @@
-"""Final CELL holdout evaluation, as fixed in holdout_v1_evaluation_plan.json.
+"""Final CELL holdout evaluations, as fixed in the holdout evaluation plans.
 
 The functions here only score predictions that were made without the
 holdout labels. They compare each candidate with frozen Syntax Reliability
 v1.2 on the same sentences: overall metrics with Wilson intervals, paired
 discordance with an exact McNemar test, recall by failure type, metrics by
-adjudication status, and the plan's decision rule for v1.3.
+adjudication status, and the plan's decision rule for its primary
+candidate (v1.3 in holdout v1, v1.4 against v1.3 in holdout v2).
 """
 
 import math
@@ -20,6 +21,7 @@ from src.syntax.reliability_ml import (
 
 
 WARNING_CATEGORIES = ("medium", "low")
+REFERENCE_VERSION = "1.2"
 SIGNIFICANCE_LEVEL = 0.05
 
 
@@ -114,8 +116,8 @@ def recall_by_failure_type(rows, targets, predictions) -> dict:
     return dict(sorted(counts.items()))
 
 
-def v13_decision(comparison: Mapping) -> str:
-    """Apply the plan's decision rule to the v1.3 against v1.2 comparison."""
+def candidate_decision(comparison: Mapping, positive_outcome: str) -> str:
+    """Apply a plan's decision rule to its primary paired comparison."""
     unreliable = comparison["unreliable"]
     usable = comparison["usable"]
     recall_gain = (
@@ -128,7 +130,7 @@ def v13_decision(comparison: Mapping) -> str:
     )
 
     if recall_gain and not added_false_warnings:
-        return "adopt_v1_3"
+        return positive_outcome
     if added_false_warnings or (
         unreliable["candidate_only_warns"] < unreliable["reference_only_warns"]
     ):
@@ -140,22 +142,33 @@ def evaluate_holdout(
     records: Sequence[Mapping],
     verdicts_by_version: Mapping[str, Mapping[str, str]],
     model_b_predictions: Mapping[str, int],
+    candidates: Sequence[str] = ("1.3",),
+    decision_pair: tuple[str, str] = ("1.3", REFERENCE_VERSION),
+    positive_outcome: str = "adopt_v1_3",
 ) -> dict:
-    """Score v1.2, v1.3, and Model B on the plan's analysis set."""
-    reference = verdicts_by_version["1.2"]
+    """Score v1.2, the candidate versions, and Model B on the analysis set.
+
+    Every system is compared with v1.2; `decision_pair` (candidate,
+    baseline) is the plan's primary comparison and gets the decision rule.
+    """
+    reference = verdicts_by_version[REFERENCE_VERSION]
     rows = analysis_rows(records, reference)
     sentence_ids = [row["sentence_id"] for row in rows]
     targets = [target_from_manual_label(row["manual_label"]) for row in rows]
     predictions = {
-        "v1.2": [warning_prediction(reference[i]) for i in sentence_ids],
-        "v1.3": [
-            warning_prediction(verdicts_by_version["1.3"][i])
-            for i in sentence_ids
+        f"v{REFERENCE_VERSION}": [
+            warning_prediction(reference[i]) for i in sentence_ids
         ],
-        "model_b": [model_b_predictions[i] for i in sentence_ids],
     }
-    if any(prediction is None for prediction in predictions["v1.3"]):
-        raise ValueError("v1.3 abstained where v1.2 did not")
+    for version in candidates:
+        version_predictions = [
+            warning_prediction(verdicts_by_version[version][i])
+            for i in sentence_ids
+        ]
+        if any(prediction is None for prediction in version_predictions):
+            raise ValueError(f"v{version} abstained where v1.2 did not")
+        predictions[f"v{version}"] = version_predictions
+    predictions["model_b"] = [model_b_predictions[i] for i in sentence_ids]
 
     labelled = [r for r in records if r["manual_label"] is not None]
     analyzable = [
@@ -181,14 +194,19 @@ def evaluate_holdout(
             for system, values in predictions.items()
         }
 
-    comparisons = {
-        "v1.3_vs_v1.2": paired_comparison(
-            targets, predictions["v1.3"], predictions["v1.2"]
-        ),
-        "model_b_vs_v1.2": paired_comparison(
-            targets, predictions["model_b"], predictions["v1.2"]
-        ),
-    }
+    reference_name = f"v{REFERENCE_VERSION}"
+    comparisons = {}
+    for system in [f"v{version}" for version in candidates] + ["model_b"]:
+        comparisons[f"{system}_vs_{reference_name}"] = paired_comparison(
+            targets, predictions[system], predictions[reference_name]
+        )
+    candidate, baseline = (f"v{version}" for version in decision_pair)
+    decision_key = f"{candidate}_vs_{baseline}"
+    if decision_key not in comparisons:
+        comparisons[decision_key] = paired_comparison(
+            targets, predictions[candidate], predictions[baseline]
+        )
+    decision_name = candidate.replace(".", "_") + "_decision"
 
     return {
         "counts": {
@@ -209,5 +227,7 @@ def evaluate_holdout(
             for system, values in predictions.items()
         },
         "metrics_by_adjudication_status": by_adjudication,
-        "v1_3_decision": v13_decision(comparisons["v1.3_vs_v1.2"]),
+        decision_name: candidate_decision(
+            comparisons[decision_key], positive_outcome
+        ),
     }

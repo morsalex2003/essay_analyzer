@@ -65,6 +65,31 @@ def test_holdout_selection_cannot_exceed_holdout_size():
         )
 
 
+def test_holdout_selection_skips_excluded_students():
+    roles, records = _roles_and_records()
+    first = select_pilot_students(
+        records, roles, student_count=2, role="untouched_holdout"
+    )
+
+    second = select_pilot_students(
+        records,
+        roles,
+        student_count=2,
+        role="untouched_holdout",
+        excluded_students=first,
+    )
+
+    assert set(first).isdisjoint(second)
+    with pytest.raises(ValueError, match="untouched_holdout"):
+        select_pilot_students(
+            records,
+            roles,
+            student_count=3,
+            role="untouched_holdout",
+            excluded_students=first,
+        )
+
+
 def _template():
     sentences = list(nlp(ESSAY_TEXT).sents)
     return [
