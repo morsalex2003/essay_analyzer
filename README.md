@@ -71,13 +71,17 @@ One spaCy `Doc` is created per text and reused by every component.
   ratio based on finite dependent clauses only.
 
 **Syntax reliability**
-- Rule-based consistency checks (v1.3) that flag sentences whose parse likely
+- Rule-based consistency checks (v1.4) that flag sentences whose parse likely
   misrepresents the clause inventory or hierarchy. Categories (HIGH, MEDIUM,
   LOW) are engineering heuristics, not probabilities. v1.3 adds three
   warnings from the CELL pilot error analysis: a bare gerund after a
   preposition, a finite-classified reduced clause without a subject, and a
-  modal attached to a non-verbal head. Datasets, the CELL pilot, feature
-  schema 1.0, and Reliability ML keep frozen v1.2.
+  modal attached to a non-verbal head. v1.4 adds a warning when a sentence
+  span disagrees with a boundary that segmentation v2 decides (a heading
+  glued to the next sentence, a citation split after "et."); it never fires
+  on segmentation v2 spans, so it matters only for frozen segmentation v1
+  parses. Datasets, the CELL pilot, feature schema 1.0, and Reliability ML
+  keep frozen v1.2.
 - A structural feature schema (44 features + 19 heuristic signals) and a
   logistic-regression development baseline. See
   [Methodology notes](#methodology-notes).
@@ -238,6 +242,15 @@ pre-registered result is inconclusive; Model B adds five catches and loses
 one (p = 0.22). Warnings remain precise, but most unreliable holdout
 sentences are not flagged: 1 of 13 segmentation errors and 1 of 16
 non-finite inventory errors are caught by v1.2.
+
+**Syntax Reliability v1.4 (after the holdout).** On development data, four
+of the five missed segmentation errors were headings glued to the next
+sentence and one a citation split after "et.", exactly the boundaries
+segmentation v2 corrects. v1.4 warns when a span disagrees with them. On the
+same 600 development sentences it reaches precision 0.890 and recall 0.677
+(v1.3: 0.882 and 0.625): five more catches, no new false warnings. The
+pattern was found on these sentences, so this is an in-sample estimate; an
+out-of-sample check needs the 73 still untouched holdout students.
 
 **Reference annotations.** Existing sentence-level reliability labels are
 provisional model-assisted reference annotations, not independent human gold.

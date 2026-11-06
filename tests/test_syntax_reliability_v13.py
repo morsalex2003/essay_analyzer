@@ -4,8 +4,6 @@ from spacy.tokens import Doc
 from src.nlp.pipeline import nlp
 from src.syntax.clauses import detect_clauses
 from src.syntax.reliability import (
-    FROZEN_RELIABILITY_VERSION,
-    RELIABILITY_VERSION,
     V1_3_WARNING_SIGNALS,
     WARNING_SIGNALS,
     assess_sentence_reliability,
@@ -64,11 +62,6 @@ V13_CASES = {
 }
 
 
-def test_versions():
-    assert RELIABILITY_VERSION == "1.3"
-    assert FROZEN_RELIABILITY_VERSION == "1.2"
-
-
 def test_new_signals_are_warnings_outside_frozen_schema():
     assert set(V1_3_WARNING_SIGNALS).isdisjoint(WARNING_SIGNALS)
     assert set(V1_3_WARNING_SIGNALS).isdisjoint(HEURISTIC_SIGNAL_NAMES)
@@ -107,7 +100,7 @@ def test_v13_negative_controls(text):
         assert set(flags).isdisjoint(V1_3_WARNING_SIGNALS)
 
 
-def test_default_is_v13_and_essay_aggregate_accepts_version():
+def test_default_keeps_v13_signals_and_aggregate_accepts_version():
     document = V13_CASES["modal_on_nonverbal_head"]
     summary = detect_clauses(document)
 

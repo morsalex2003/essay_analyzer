@@ -1,5 +1,6 @@
 from spacy.tokens import Doc, Span, Token
 
+from src.nlp.segmentation import boundary_decisions
 from src.syntax.clauses import SUBJECT_DEPENDENCIES, frozen_clause_summary
 from src.syntax.reliability_error_features import (
     count_bare_gerund_pcomp,
@@ -9,12 +10,12 @@ from src.syntax.reliability_error_features import (
 )
 
 
-# v1.3 adds three warning signals. Syntax Reliability datasets, the CELL
-# pilot, feature schema 1.0, and Reliability ML stay on frozen v1.2. Both
-# versions use Clause Detection v2.1.
-RELIABILITY_VERSION = "1.3"
+# v1.3 adds three warning signals and v1.4 one more. Syntax Reliability
+# datasets, the CELL pilot, feature schema 1.0, and Reliability ML stay on
+# frozen v1.2. All versions use Clause Detection v2.1.
+RELIABILITY_VERSION = "1.4"
 FROZEN_RELIABILITY_VERSION = "1.2"
-SUPPORTED_RELIABILITY_VERSIONS = ("1.2", "1.3")
+SUPPORTED_RELIABILITY_VERSIONS = ("1.2", "1.3", "1.4")
 
 
 # These are provisional engineering thresholds, not empirically validated
@@ -66,6 +67,12 @@ V1_3_WARNING_SIGNALS = (
     "finite_acl_without_subject",
     "modal_on_nonverbal_head",
 )
+
+# The sentence span disagrees with a boundary that segmentation v2 decides
+# from layout and punctuation: a heading line glued to the next sentence, or
+# a citation split after "et.". Spans from segmentation v2 never disagree,
+# so the signal only fires on parses made with the frozen segmentation v1.
+V1_4_WARNING_SIGNALS = ("segmentation_boundary_conflict",)
 
 NON_FINITE_VERB_FORMS = ("Inf", "Ger", "Part")
 CLAUSAL_DEPENDENCIES = (
@@ -1017,6 +1024,17 @@ def _v1_3_flags(
     return flags
 
 
+def _has_segmentation_boundary_conflict(sentence: Doc | Span) -> bool:
+    span = sentence[:]
+    decisions = boundary_decisions(span.doc)
+
+    for index in range(span.start + 1, span.end):
+        if decisions.get(index) is True:
+            return True
+
+    return decisions.get(span.end) is False
+
+
 def detect_reliability_flags(
     sentence: Doc | Span,
     clause_summary: dict[str, object],
@@ -1024,7 +1042,7 @@ def detect_reliability_flags(
 ) -> list[str]:
     """Return structural warnings without assigning a reliability category."""
     _check_reliability_version(version)
-    # Syntax Reliability v1.2 and v1.3 are frozen on Clause Detection v2.1.
+    # Every Syntax Reliability version is frozen on Clause Detection v2.1.
     clause_summary = frozen_clause_summary(sentence, clause_summary)
     flags = []
     finite_heads = _heads_in_sentence(
@@ -1113,8 +1131,11 @@ def detect_reliability_flags(
     if _has_nonverbal_root_finite_auxiliary_conflict(sentence):
         flags.append("nonverbal_root_finite_auxiliary_conflict")
 
-    if version == "1.3":
+    if version in ("1.3", "1.4"):
         flags.extend(_v1_3_flags(sentence, finite_heads))
+
+    if version == "1.4" and _has_segmentation_boundary_conflict(sentence):
+        flags.append("segmentation_boundary_conflict")
 
     return flags
 
@@ -1132,7 +1153,11 @@ def _classify_reliability(
     for flag in flags:
         if flag in STRONG_SIGNALS:
             strong_signal_count += 1
-        elif flag in WARNING_SIGNALS or flag in V1_3_WARNING_SIGNALS:
+        elif (
+            flag in WARNING_SIGNALS
+            or flag in V1_3_WARNING_SIGNALS
+            or flag in V1_4_WARNING_SIGNALS
+        ):
             warning_signal_count += 1
 
     if strong_signal_count > 0:

@@ -64,8 +64,14 @@ def _starts_after_heading_line(line_tokens, next_token) -> bool:
     return True
 
 
-@Language.component(COMPONENT_NAME)
-def learner_sentence_boundaries(document: Doc) -> Doc:
+def boundary_decisions(document: Doc) -> dict[int, bool]:
+    """Return the sentence starts segmentation v2 decides, by token index.
+
+    True marks a token that must start a sentence (after a heading line or
+    a blank line); False marks a token that must not (after "et." in a
+    citation). Tokens missing from the result are left to the parser.
+    """
+    decisions = {}
     line_tokens = []
 
     for index in range(len(document) - 1):
@@ -75,7 +81,7 @@ def learner_sentence_boundaries(document: Doc) -> Doc:
         if _is_citation_abbreviation_stop(document, index):
             first_character = next_token.text[:1]
             if first_character.islower() or first_character.isdigit():
-                next_token.is_sent_start = False
+                decisions[index + 1] = False
 
         if not token.is_space:
             line_tokens.append(token)
@@ -89,10 +95,18 @@ def learner_sentence_boundaries(document: Doc) -> Doc:
                 # A blank line inside a hard-wrapped sentence is followed by
                 # a lowercase word; a capitalised word starts a new block.
                 if not _starts_lowercase(next_token.text):
-                    next_token.is_sent_start = True
+                    decisions[index + 1] = True
             elif _starts_after_heading_line(line_tokens, next_token):
-                next_token.is_sent_start = True
+                decisions[index + 1] = True
 
         line_tokens = []
+
+    return decisions
+
+
+@Language.component(COMPONENT_NAME)
+def learner_sentence_boundaries(document: Doc) -> Doc:
+    for index, is_sentence_start in boundary_decisions(document).items():
+        document[index].is_sent_start = is_sentence_start
 
     return document

@@ -1339,3 +1339,52 @@ evaluated students are no longer untouched; any later untouched evaluation
 must use the other 73 holdout students. The main open problem is recall on
 segmentation and non-finite errors, not precision.
 
+## Syntax Reliability v1.4
+
+### Problem
+
+The holdout showed that v1.2 catches almost no segmentation errors (1 of
+13). On development data, v1.3 still missed five of the eight sentences
+labelled `sentence_segmentation` (all in the CELL pilot). Four were short
+headings glued to the next sentence across a line break ("Analysis",
+"Register", ...) and one was a citation split after "et.". These are exactly
+the boundaries segmentation v2 presets, but the reliability datasets and
+evaluations use the frozen segmentation v1 parses, and no reliability signal
+looked at boundaries.
+
+### Decision
+
+- `src/nlp/segmentation.py` now exposes `boundary_decisions(document)`, the
+  sentence starts segmentation v2 decides; the spaCy component only applies
+  them, so segmentation behaviour is unchanged.
+- Syntax Reliability v1.4 adds one warning signal,
+  `segmentation_boundary_conflict`: a token inside the span must start a
+  sentence, or the token right after the span must not. It keeps all v1.3
+  signals, and `analyze_writing()` now reports `syntax_reliability` "1.4".
+- On segmentation v2 spans the signal cannot fire, because those boundaries
+  are already applied. It therefore changes nothing in `analyze_writing()`
+  and matters for parses made with the frozen segmentation v1 (all
+  reliability datasets, the CELL pilot, and the holdout packets).
+- Frozen v1.2 stays the reference; feature schemas and Reliability ML are
+  untouched.
+
+### Results (development set, 600 sentences where v1.2 gives a verdict)
+
+| System | Precision | Recall | TP | FP |
+|---|---|---|---|---|
+| Frozen v1.2 | 0.869 | 0.552 | 53 | 8 |
+| v1.3 | 0.882 | 0.625 | 60 | 8 |
+| v1.4 | 0.890 | 0.677 | 65 | 8 |
+
+The ten development sentences where the signal fires are five missed and
+two already caught `UNRELIABLE` sentences and three `NOT_ANALYZABLE` ones;
+none is usable. Dataset v1 has no segmentation labels and is unchanged.
+
+### Limits
+
+The pattern was taken from these development sentences, so the gain is an
+in-sample estimate. The holdout v1 students are no longer untouched; an
+out-of-sample check needs a new evaluation on the 73 remaining holdout
+students. Non-finite inventory misses remain open: on development data they
+are mostly nouns parsed as verbs ("to curriculum", "cyberbullying",
+"reading skills"), which no boundary rule can catch.
