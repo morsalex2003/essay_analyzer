@@ -104,7 +104,11 @@ Requires Python 3.14.
 python3.14 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python -m spacy download en_core_web_sm
+git config core.hooksPath scripts/hooks
 ```
+
+The last line enables the pre-commit hook that refuses commits of private
+learner data (see [Data and privacy](#data-and-privacy)).
 
 ## Usage
 
@@ -301,6 +305,17 @@ tests/                   pytest suite
 Raw learner essays, annotations, CELL corpus files, and task-alignment intake
 data are excluded by `.gitignore`. Only protocols, schemas, aggregate reports,
 and text-free split assignments are tracked.
+
+Two further guards cover mistakes that `.gitignore` cannot stop:
+
+- `scripts/hooks/pre-commit` runs `scripts/check_private_data.py` on every
+  commit. It refuses staged files in private locations, new data files
+  under `data/` that are not listed as public, and added lines in `data/`
+  files that give a value to a learner-text field such as `original_text`.
+- `.claude/settings.json` stops Claude Code from reading the raw CELL
+  corpus, force-adding ignored files, skipping the hook, or changing
+  `core.hooksPath`. `.claude/agents/reviewer.md` defines a read-only
+  reviewer subagent for a check before committing.
 
 ## CEFR vocabulary data attribution
 

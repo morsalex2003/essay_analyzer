@@ -1457,3 +1457,41 @@ Only the 73 holdout students outside holdout v1 can test it.
 - The generalised code reproduces the recorded holdout v1 report exactly
   (checked by comparison only, without printing labels), with the same
   Model B threshold 0.9238.
+
+## Private-Data Guards for Commits and Agents
+
+### Problem
+
+Learner essays, sentences, and labels were kept out of git only by
+`.gitignore` and by instructions to the agents. `git add -f`, a learner
+sentence copied into a tracked report, or an agent that ignores its
+instructions would still publish them.
+
+### Decision
+
+- `scripts/check_private_data.py` checks staged changes and refuses:
+  files in the private locations listed in `.gitignore`; new `.jsonl`,
+  `.csv`, or `.tsv` files under `data/` that are not listed in
+  `PUBLIC_DATA_FILES`; and added lines in `data/` files that give a value
+  to a learner-text field (`original_text` and similar). Schema files and
+  synthetic templates are exempt; `tests/` is not checked because its
+  fixtures are synthetic.
+- `scripts/hooks/pre-commit` runs the check; it is enabled per clone with
+  `git config core.hooksPath scripts/hooks`.
+- `.claude/settings.json` denies Claude Code reading the raw CELL corpus,
+  `git add -f`, `git commit --no-verify`, and changing `core.hooksPath`.
+  Reading the other local folders stays allowed, because the sealed
+  labelling sessions must read their blind packets; who may see holdout
+  text is still set by each session's brief.
+- `.claude/agents/reviewer.md` adds one read-only reviewer subagent
+  (AGENTS.md rules, private data, frozen components) for use before a
+  commit.
+
+### Not adopted
+
+A fixed agent chain (engineer, test runner, reviewer, history keeper) for
+every task was not adopted: much of this project's work is evaluation and
+protocol design rather than code, tests run in seconds, and the history is
+best written by the agent that made the decisions. Labelling stays
+model-assisted with owner review, as recorded for the CELL pilot and
+holdouts; a human-only reference subset would be a separate decision.

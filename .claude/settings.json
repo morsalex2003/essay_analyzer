@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./data/syntax_reliability/external/cell/local/corpus/**)",
+      "Bash(git add -f *)",
+      "Bash(git add --force *)",
+      "Bash(git commit --no-verify *)",
+      "Bash(git commit -n *)",
+      "Bash(git config core.hooksPath *)",
+      "Bash(git config --unset core.hooksPath*)"
+    ]
+  }
+}

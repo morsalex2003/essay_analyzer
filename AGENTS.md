@@ -77,6 +77,8 @@ After changing analysis logic:
 ## Git
 
 - Do not commit `.venv`, `.idea`, `__pycache__`, `.DS_Store`, `.env`, or generated files.
+- Never commit learner text, annotations, or local batch files; the pre-commit
+  hook (`scripts/hooks/pre-commit`) refuses them and must not be bypassed.
 - Keep changes focused on the requested task.
 - Do not push or commit unless explicitly asked.
 - Before committing, summarize the changes.
