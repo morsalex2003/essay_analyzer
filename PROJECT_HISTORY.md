@@ -1531,6 +1531,71 @@ Agreement between two models of one family is not independent evidence. A
 parser trained differently (for example a transformer model) would be the
 next candidate, at a much higher installation and runtime cost.
 
+## Syntax Reliability v1.5: Optional Transformer Reference Parse
+
+### Why
+
+The second-parser idea failed with `en_core_web_md` because it shares the
+training data of `en_core_web_sm`. `en_core_web_trf` (a transformer model,
+spacy-curated-transformers 0.3.0, torch 2.15.0) is trained differently.
+On the 600 development sentences it disagrees with sm on 12 of the 14
+non-finite errors v1.4 misses (md: 5).
+
+### Exploration (development set, before any code change)
+
+Four disagreement variants were counted where v1.4 does not warn yet:
+sm verb / trf nominal (10 new catches, 21 new false warnings), the same on
+clausal dependents only (8, 2), sm nominal / trf verb (5, 15), and a changed
+clausal dependency label (17, 56). The second was chosen. Because it was
+chosen on these sentences, its development gain is optimistic.
+
+### Decision
+
+- `src/nlp/reference_parse.py` parses the essay text with the optional model
+  and copies its part of speech onto sm tokens matched by character offsets
+  (`Token._.reference_pos`, `Doc._.reference_model`). Nothing else from the
+  transformer parse is used, and every metric keeps the sm parse.
+- v1.5 = v1.4 + `reference_parse_nominal_clause_head`: a token that sm tags
+  `VERB` or `AUX` with a clausal dependency (`xcomp`, `acl`, `ccomp`,
+  `advcl`, `relcl`, `pcomp`, `csubj`) whose reference POS is `NOUN`,
+  `PROPN`, `ADJ`, or `NUM`. It is a warning signal. v1.5 refuses to run
+  without the reference parse.
+- v1.4 stays the default. `analyze_writing(reference_parse_check=True)` and
+  `main.py --transformer-check` switch to v1.5 and record the model in
+  `processing_versions.reference_parser`. The model is installed with
+  `requirements-transformer.txt`, not `requirements.txt`; a missing model
+  gives a short error.
+- `run_reliability_ml_v2_baseline.py --transformer-check` adds v1.5 to the
+  development tables; without the flag its output is unchanged.
+- Development result (600 sentences): v1.5 precision 0.880, recall 0.760,
+  73 TP, 10 FP (v1.4: 0.890, 0.677, 65, 8). Six extra catches are in the
+  CELL pilot (no new false warning), two catches and both false warnings in
+  Dataset v1. Both false warnings are correct verbs ("challenging" after
+  "is", "influence" in a relative clause) that trf tags as adjective or noun.
+
+## CELL Holdout Evaluation Plan v3
+
+`data/syntax_reliability/external/cell/holdout_v3_evaluation_plan.json`
+was fixed before any selection:
+
+- all 37 remaining holdout students, 12 sentences each, seed 20261107,
+  excluding holdout v1 and v2; after this batch no CELL holdout student is
+  untouched;
+- the same parse, guideline, blind packet (sm parse only, no transformer
+  output), new sealed labelling session (`claude_sealed_holdout_v3`), and
+  owner review as v2;
+- primary comparison v1.5 against v1.4; secondary v1.3, v1.4, v1.5, and
+  Model B against v1.2;
+- decision: confirmed if the recall gain is significant (exact McNemar
+  p < 0.05) without significant new false warnings; negative (significant
+  false warnings or lost catches) withdraws the transformer check;
+  otherwise inconclusive and the check stays optional. v1.4 stays the
+  default in every case.
+
+`evaluate_cell_holdout.py --batch v3` scores v1.2 to v1.5 and Model B;
+`heuristic_verdicts()` adds the reference parse for v1.5 on first use of
+each essay. A test checks that every batch's settings match its plan.
+
 ## Private-Data Guards for Commits and Agents
 
 ### Problem

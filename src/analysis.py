@@ -17,10 +17,12 @@ from src.lexical.preprocessing import (
 )
 from src.lexical.sophistication import lexical_sophistication
 from src.nlp.pipeline import analysis_pipeline
+from src.nlp.reference_parse import add_reference_parse
 from src.nlp.segmentation import SENTENCE_SEGMENTATION_VERSION
 from src.syntax.clauses import CLAUSE_DETECTOR_VERSION, detect_clauses
 from src.syntax.complexity import analyze_syntax_document
 from src.syntax.reliability import (
+    REFERENCE_PARSE_RELIABILITY_VERSION,
     RELIABILITY_VERSION,
     assess_sentence_reliability,
     assess_syntax_reliability,
@@ -95,6 +97,7 @@ def _longest_sentence_length(document: Doc) -> int:
 def _sentence_reliability_records(
     document: Doc,
     clause_summary: dict[str, object],
+    version: str,
 ) -> list[dict[str, object]]:
     sentence_records = []
 
@@ -102,6 +105,7 @@ def _sentence_reliability_records(
         reliability = assess_sentence_reliability(
             sentence,
             clause_summary,
+            version,
         )
         sentence_records.append(
             {
@@ -194,13 +198,22 @@ def analyze_writing(
     efllex_vocabulary=None,
     include_research_metrics: bool = False,
     task_context: dict[str, object] | None = None,
+    reference_parse_check: bool = False,
 ) -> dict[str, object]:
     """Return one versioned analysis result for application clients.
 
     EFLLex is intentionally available only through the explicit research
     option because its license does not permit commercial use.
+
+    reference_parse_check adds the optional transformer reference parse and
+    switches Syntax Reliability to v1.5; every metric still uses the sm
+    parse.
     """
     document = analysis_pipeline()(text)
+    reliability_version = RELIABILITY_VERSION
+    if reference_parse_check:
+        add_reference_parse(document)
+        reliability_version = REFERENCE_PARSE_RELIABILITY_VERSION
     clause_summary = detect_clauses(document)
     all_lexical_tokens = preprocess_tokens(
         document,
@@ -211,6 +224,7 @@ def analyze_writing(
     syntax_reliability = assess_syntax_reliability(
         document,
         clause_summary,
+        reliability_version,
     )
     frequency = frequency_analysis(document)
     repetitions = repeated_words(document)
@@ -251,7 +265,8 @@ def analyze_writing(
         "processing_versions": {
             "sentence_segmentation": SENTENCE_SEGMENTATION_VERSION,
             "clause_detection": CLAUSE_DETECTOR_VERSION,
-            "syntax_reliability": RELIABILITY_VERSION,
+            "syntax_reliability": reliability_version,
+            "reference_parser": document._.reference_model,
         },
         "task_context": copy_task_context(task_context),
         "input_summary": {
@@ -274,6 +289,7 @@ def analyze_writing(
             "sentences": _sentence_reliability_records(
                 document,
                 clause_summary,
+                reliability_version,
             ),
         },
         "cefr": None,

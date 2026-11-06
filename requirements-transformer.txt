@@ -1,0 +1,7 @@
+# Optional: transformer reference parse for Syntax Reliability v1.5
+# (analyze_writing(reference_parse_check=True), main.py --transformer-check).
+# Install after requirements.txt. Large download (torch).
+-r requirements.txt
+spacy-curated-transformers==0.3.0
+torch==2.15.0
+en_core_web_trf @ https://github.com/explosion/spacy-models/releases/download/en_core_web_trf-3.8.0/en_core_web_trf-3.8.0-py3-none-any.whl

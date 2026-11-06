@@ -7,6 +7,8 @@ heuristic as the reference. Models and feature schema are unchanged from
 ML v1; only the data and the evaluation procedure differ.
 
 Output is aggregate only and contains no learner text or sentence IDs.
+--transformer-check adds the optional Syntax Reliability v1.5, which needs
+requirements-transformer.txt.
 """
 
 import json
@@ -54,9 +56,10 @@ from src.syntax.reliability_thresholds import (  # noqa: E402
 
 EXPECTED_TARGET_COUNTS = {0: 504, 1: 102}
 CANDIDATE_VERSIONS = ("1.3", "1.4")
+TRANSFORMER_CANDIDATE_VERSION = "1.5"
 
 
-def load_observations():
+def load_observations(candidate_versions=CANDIDATE_VERSIONS):
     lock = json.loads((DATASET_DIRECTORY / LOCK_RELATIVE_PATH).read_text())
     changed_files = lock_mismatches(lock, DATASET_DIRECTORY)
     if changed_files:
@@ -64,7 +67,7 @@ def load_observations():
 
     observations = []
     batch_ids = []
-    candidate_verdicts = {version: {} for version in CANDIDATE_VERSIONS}
+    candidate_verdicts = {version: {} for version in candidate_versions}
     for batch in load_batches(DATASET_DIRECTORY):
         batch_observations = prepare_essay_context_observations(
             batch["essays"],
@@ -78,7 +81,7 @@ def load_observations():
             nlp,
             {essay["essay_id"]: essay for essay in batch["essays"]},
         )
-        for version in CANDIDATE_VERSIONS:
+        for version in candidate_versions:
             candidate_verdicts[version].update(
                 heuristic_verdicts(batch["annotations"], parser, version)
             )
@@ -174,8 +177,15 @@ def oof_arrays(result):
     return predictions, probabilities
 
 
-def main() -> None:
-    observations, batch_ids, candidates = load_observations()
+def main(argv=None) -> None:
+    arguments = sys.argv[1:] if argv is None else argv
+    candidate_versions = CANDIDATE_VERSIONS
+    if "--transformer-check" in arguments:
+        candidate_versions += (TRANSFORMER_CANDIDATE_VERSION,)
+
+    observations, batch_ids, candidates = load_observations(
+        candidate_versions
+    )
     targets = observation_targets(observations)
 
     if dict(Counter(targets.tolist())) != EXPECTED_TARGET_COUNTS:

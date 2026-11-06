@@ -225,3 +225,29 @@ def test_opening_record_is_found_per_batch():
         split, "cell_reliability_holdout_v2"
     ) is None
     assert holdout_script.opening_record({}, "any") is None
+
+
+@pytest.mark.parametrize("batch", sorted(holdout_script.HOLDOUT_BATCHES))
+def test_batch_settings_match_their_plan(batch):
+    settings = holdout_script.HOLDOUT_BATCHES[batch]
+    plan = json.loads(
+        holdout_script.batch_paths(batch)["plan"].read_text(encoding="utf-8")
+    )
+
+    assert plan["data"]["batch_id"] == settings["batch_id"]
+    candidate, reference = settings["decision_pair"]
+    assert candidate in settings["candidates"]
+    systems = plan["systems"]
+    assert f"v{candidate}" in systems["primary_candidate"]
+    assert f"v{reference}" in (
+        systems["primary_candidate"] + systems["reference"]
+    )
+
+
+def test_holdout_v3_uses_every_remaining_student():
+    plan = json.loads(
+        holdout_script.batch_paths("v3")["plan"].read_text(encoding="utf-8")
+    )
+
+    assert plan["data"]["students"] == 98 - 25 - 36
+    assert plan["data"]["selection_seed"] == 20261107

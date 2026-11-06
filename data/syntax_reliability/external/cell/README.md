@@ -165,3 +165,18 @@ The batch was evaluated on 2026-11-06 (`holdout_v2_evaluation.json`):
 v1.4 caught nine unreliable sentences that v1.3 missed and lost none
 (exact McNemar p = 0.004), so the pre-registered decision is
 `confirm_v1_4`.
+
+## Holdout evaluation v3
+
+`holdout_v3_evaluation_plan.json` fixes the third evaluation before any
+selection: all 37 remaining holdout students (12 sentences each, seed
+20261107), labelled blind by a new sealed session and reviewed by the
+owner. The primary question is whether the optional Syntax Reliability v1.5
+(the transformer reference-parse warning) raises recall over v1.4. After
+this batch no CELL holdout student is untouched.
+
+The batch is prepared like v2, excluding both earlier batches
+(`--exclude-students-from` once for `local/holdout_v1/essays.jsonl` and once
+for `local/holdout_v2/essays.jsonl`). The blind packet shows only the
+`en_core_web_sm` parse. `evaluate_cell_holdout.py --batch v3` needs
+`requirements-transformer.txt`.

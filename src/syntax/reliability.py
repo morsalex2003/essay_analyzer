@@ -1,5 +1,6 @@
 from spacy.tokens import Doc, Span, Token
 
+from src.nlp import reference_parse  # noqa: F401  (registers reference_pos)
 from src.nlp.segmentation import boundary_decisions
 from src.syntax.clauses import SUBJECT_DEPENDENCIES, frozen_clause_summary
 from src.syntax.reliability_error_features import (
@@ -10,12 +11,15 @@ from src.syntax.reliability_error_features import (
 )
 
 
-# v1.3 adds three warning signals and v1.4 one more. Syntax Reliability
-# datasets, the CELL pilot, feature schema 1.0, and Reliability ML stay on
-# frozen v1.2. All versions use Clause Detection v2.1.
+# v1.3 adds three warning signals and v1.4 one more. v1.5 adds a signal
+# that needs the optional transformer reference parse, so v1.4 stays the
+# default. Syntax Reliability datasets, the CELL pilot, feature schema 1.0,
+# and Reliability ML stay on frozen v1.2. All versions use Clause Detection
+# v2.1.
 RELIABILITY_VERSION = "1.4"
+REFERENCE_PARSE_RELIABILITY_VERSION = "1.5"
 FROZEN_RELIABILITY_VERSION = "1.2"
-SUPPORTED_RELIABILITY_VERSIONS = ("1.2", "1.3", "1.4")
+SUPPORTED_RELIABILITY_VERSIONS = ("1.2", "1.3", "1.4", "1.5")
 
 
 # These are provisional engineering thresholds, not empirically validated
@@ -73,6 +77,21 @@ V1_3_WARNING_SIGNALS = (
 # a citation split after "et.". Spans from segmentation v2 never disagree,
 # so the signal only fires on parses made with the frozen segmentation v1.
 V1_4_WARNING_SIGNALS = ("segmentation_boundary_conflict",)
+
+# A clausal dependent that the sm parser makes a verb is a noun, proper
+# noun, adjective, or number in the transformer reference parse: usually a
+# noun or adjective misread as a verb.
+V1_5_WARNING_SIGNALS = ("reference_parse_nominal_clause_head",)
+REFERENCE_CHECK_DEPENDENCIES = (
+    "xcomp",
+    "acl",
+    "ccomp",
+    "advcl",
+    "relcl",
+    "pcomp",
+    "csubj",
+)
+REFERENCE_NOMINAL_POS = ("NOUN", "PROPN", "ADJ", "NUM")
 
 NON_FINITE_VERB_FORMS = ("Inf", "Ger", "Part")
 CLAUSAL_DEPENDENCIES = (
@@ -1035,6 +1054,24 @@ def _has_segmentation_boundary_conflict(sentence: Doc | Span) -> bool:
     return decisions.get(span.end) is False
 
 
+def _has_reference_parse_nominal_clause_head(sentence: Doc | Span) -> bool:
+    if sentence[:].doc._.reference_model is None:
+        raise ValueError(
+            "Syntax Reliability v1.5 needs the reference parse; "
+            "call add_reference_parse() on the document first."
+        )
+
+    for token in sentence:
+        if (
+            token.pos_ in ("VERB", "AUX")
+            and token.dep_ in REFERENCE_CHECK_DEPENDENCIES
+            and token._.reference_pos in REFERENCE_NOMINAL_POS
+        ):
+            return True
+
+    return False
+
+
 def detect_reliability_flags(
     sentence: Doc | Span,
     clause_summary: dict[str, object],
@@ -1131,11 +1168,16 @@ def detect_reliability_flags(
     if _has_nonverbal_root_finite_auxiliary_conflict(sentence):
         flags.append("nonverbal_root_finite_auxiliary_conflict")
 
-    if version in ("1.3", "1.4"):
+    if version in ("1.3", "1.4", "1.5"):
         flags.extend(_v1_3_flags(sentence, finite_heads))
 
-    if version == "1.4" and _has_segmentation_boundary_conflict(sentence):
+    if version in ("1.4", "1.5") and _has_segmentation_boundary_conflict(
+        sentence
+    ):
         flags.append("segmentation_boundary_conflict")
+
+    if version == "1.5" and _has_reference_parse_nominal_clause_head(sentence):
+        flags.append("reference_parse_nominal_clause_head")
 
     return flags
 
@@ -1157,6 +1199,7 @@ def _classify_reliability(
             flag in WARNING_SIGNALS
             or flag in V1_3_WARNING_SIGNALS
             or flag in V1_4_WARNING_SIGNALS
+            or flag in V1_5_WARNING_SIGNALS
         ):
             warning_signal_count += 1
 

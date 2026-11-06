@@ -82,6 +82,13 @@ One spaCy `Doc` is created per text and reused by every component.
   on segmentation v2 spans, so it matters only for frozen segmentation v1
   parses. Datasets, the CELL pilot, feature schema 1.0, and Reliability ML
   keep frozen v1.2.
+- Optional transformer check (v1.5): the essay is parsed a second time with
+  `en_core_web_trf`, and a sentence is flagged when a clausal dependent that
+  `en_core_web_sm` parses as a verb or auxiliary is nominal (noun, proper
+  noun, adjective, or number) in the transformer parse (usually a noun
+  misread as a verb). The transformer
+  parse is evidence only; every metric still uses `en_core_web_sm`. The
+  check is off by default because the model is a large extra install.
 - A structural feature schema (44 features + 19 heuristic signals) and a
   logistic-regression development baseline. See
   [Methodology notes](#methodology-notes).
@@ -110,6 +117,13 @@ git config core.hooksPath scripts/hooks
 The last line enables the pre-commit hook that refuses commits of private
 learner data (see [Data and privacy](#data-and-privacy)).
 
+The optional transformer reliability check needs a further, large install
+(torch and `en_core_web_trf`):
+
+```text
+.venv/bin/python -m pip install -r requirements-transformer.txt
+```
+
 ## Usage
 
 Analyze an essay from the command line (the default file is
@@ -125,6 +139,9 @@ Analyze an essay from the command line (the default file is
 
 `--json` prints the same result as JSON. EFLLex metrics are added only with
 `--research`, because the EFLLex license is research-only.
+`--transformer-check` (or `analyze_writing(text,
+reference_parse_check=True)`) switches Syntax Reliability to v1.5; it needs
+`requirements-transformer.txt`.
 
 Use the engine from code:
 
@@ -276,6 +293,18 @@ Segmentation errors caught rise from 3 to 12 of 22. Against v1.2, v1.3 adds
 four catches (p = 0.125, again not significant on its own). Non-finite
 inventory errors remain the largest gap (5 of 23 caught). 37 holdout
 students are still untouched.
+
+**Syntax Reliability v1.5 (optional, after holdout v2).** A second parser of
+the same family (`en_core_web_md`) mostly repeats the mistakes of
+`en_core_web_sm` and was rejected. The transformer model `en_core_web_trf`
+disagrees on 12 of the 14 non-finite errors v1.4 misses on development
+data. v1.5 warns when a clausal dependent that sm parses as a verb or
+auxiliary is nominal (noun, proper noun, adjective, or number) in the
+transformer parse. On the same 600 development sentences it
+reaches precision 0.880 and recall 0.760 (v1.4: 0.890 and 0.677): eight more
+catches, two more false warnings. The rule was chosen from four variants on
+these sentences, so this is optimistic; `holdout_v3_evaluation_plan.json`
+fixes its test on the last 37 untouched holdout students.
 
 **Reference annotations.** Existing sentence-level reliability labels are
 provisional model-assisted reference annotations, not independent human gold.

@@ -76,5 +76,6 @@ def test_analysis_records_processing_versions():
         "sentence_segmentation": "2",
         "clause_detection": "2.2",
         "syntax_reliability": "1.4",
+        "reference_parser": None,
     }
     assert result["input_summary"]["sentence_count"] == 2

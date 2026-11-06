@@ -1,0 +1,90 @@
+{
+  "plan_version": "1.0",
+  "plan_id": "cell_reliability_holdout_v3_evaluation",
+  "fixed_at": "2026-11-06",
+  "fixed_before": "holdout v3 student and sentence selection, annotation, and any holdout v3 prediction",
+  "data": {
+    "split": "data/syntax_reliability/external/cell/split_v1.json",
+    "role": "untouched_holdout",
+    "excluded_students": "the 25 students of cell_reliability_holdout_v1 and the 36 students of cell_reliability_holdout_v2, both opened on 2026-11-06; selection runs on the 37 remaining holdout students",
+    "batch_id": "cell_reliability_holdout_v3",
+    "selection": "the same CELL pilot procedure (src/cell_pilot.py) as holdout v1 and v2: structural metadata for students, parser-derived structural categories for sentences; no labels, verdicts, predictions, quality, length, or duplicate flags",
+    "selection_seed": 20261107,
+    "students": 37,
+    "sentences_per_student": 12,
+    "reserve": "none: this batch uses every remaining holdout student, so no untouched CELL holdout data is left after it is opened",
+    "parse": {
+      "pipeline": "frozen en_core_web_sm 3.8.0 with spaCy 3.8.13 (sentence segmentation v1)",
+      "clause_detector_version": "2.1",
+      "context": "each sentence is a span of its complete essay parse",
+      "reference_parse": "en_core_web_trf 3.8.0 (spacy-curated-transformers 0.3.0, torch 2.15.0) on the complete essay text, used only by Syntax Reliability v1.5; the labeller never sees it"
+    }
+  },
+  "annotation": {
+    "guideline_version": "1.2",
+    "labeller": "a new separate model session (annotator_id claude_sealed_holdout_v3) that sees only a blind packet: sentence, neighbouring sentences, sm token parse, clause heads, and the annotation guideline",
+    "labeller_must_not_see": [
+      "Syntax Reliability verdicts or flags of any version",
+      "the transformer reference parse",
+      "Reliability ML features, probabilities, or predictions",
+      "heuristic and ML source code",
+      "development results, error analyses, holdout v1 and v2 results, and project history"
+    ],
+    "annotation_origin": "model_assisted_manual_review",
+    "owner_review": "the dataset owner reviews every UNRELIABLE, MOSTLY_RELIABLE, and NOT_ANALYZABLE label and a seeded random sample of 40 RELIABLE labels (seed 20261107); reviewed records become adjudicated by human_owner_v1",
+    "freeze": "labels are locked by file hash before the evaluation run; no label changes after the run"
+  },
+  "systems": {
+    "reference": "Syntax Reliability v1.2 warning (medium or low)",
+    "primary_candidate": "Syntax Reliability v1.5 warning (medium or low), compared with v1.4 to isolate the reference_parse_nominal_clause_head signal",
+    "secondary_candidates": [
+      "Syntax Reliability v1.3, v1.4, and v1.5 warnings, each compared with v1.2",
+      "Reliability ML Model B, refit on all 606 development observations with the threshold chosen by the heuristic_precision rule exactly as in holdout v1 and v2 (expected 0.9238), compared with v1.2"
+    ],
+    "not_evaluated": [
+      "Model A and Model C",
+      "Clause Detection v2.2 and sentence segmentation v2, whose labels would need re-judging",
+      "the other reference-parse variants explored on development data"
+    ]
+  },
+  "analysis": {
+    "target": {
+      "positive": [
+        "UNRELIABLE"
+      ],
+      "negative": [
+        "RELIABLE",
+        "MOSTLY_RELIABLE"
+      ],
+      "excluded": [
+        "NOT_ANALYZABLE"
+      ]
+    },
+    "analysis_set": "labelled analyzable sentences where v1.2 does not abstain; abstentions are counted and reported separately",
+    "metrics": [
+      "precision",
+      "recall",
+      "f1",
+      "balanced_accuracy",
+      "true and false positive and negative counts"
+    ],
+    "confidence_intervals": "Wilson 95% for precision and recall",
+    "paired_comparison": "discordant counts on UNRELIABLE sentences (recall) and on usable sentences (false warnings), each with a two-sided exact McNemar test, for v1.5 against v1.4 and for v1.3, v1.4, v1.5, and Model B against v1.2",
+    "breakdowns": [
+      "manual failure type (recall)",
+      "adjudicated versus single labels"
+    ],
+    "primary_question": "Does the transformer reference-parse warning raise recall over v1.4 without adding false warnings?",
+    "decision_rule": "the v1.5 signal is confirmed if its recall gain over v1.4 on UNRELIABLE sentences is significant (exact McNemar p < 0.05) and it adds no significant false warnings; if v1.5 adds significant false warnings or loses catches, the result is negative and the transformer check is withdrawn from analyze_writing and the CLI; otherwise the result is inconclusive and the check stays optional as a development candidate. In every case v1.4 stays the default, because v1.5 needs the optional transformer model",
+    "power_note": "on the 600 development sentences the signal fired on 16 (14 UNRELIABLE), adding 8 catches and 2 false warnings over v1.4; the signal was chosen from four variants on those sentences, so the development gain is optimistic. Holdout v2 had 23 UNRELIABLE sentences with a non-finite failure among 362, 18 of them missed by v1.4; with no lost catches a significant result needs at least 6 new catches",
+    "no_pooling": "holdout v1, v2, and v3 are reported separately; earlier batches were opened before v1.5 existed and are not re-scored as untouched data"
+  },
+  "opening_procedure": [
+    "freeze this plan, the evaluated code, the optional transformer requirements, and the development set lock in git",
+    "prepare the batch, write the blind packet, and label it in a new sealed session; owner review follows in that session, with the review sheet built by scripts/review_cell_annotation_labels.py --seed 20261107 (its default seed belongs to holdout v1)",
+    "lock the holdout v3 labels by hash",
+    "record the opening in split_v1.json (holdout_openings) and in PROJECT_HISTORY.md",
+    "run the evaluation once and report every planned number, whatever the outcome",
+    "after opening, no CELL holdout student is untouched; later reliability changes need new independent data"
+  ]
+}

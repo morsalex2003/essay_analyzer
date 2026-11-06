@@ -1,7 +1,8 @@
 """Lock, open, and evaluate one CELL holdout batch exactly once.
 
-`--batch v1` or `--batch v2` picks the batch; each follows its own
-holdout_<batch>_evaluation_plan.json. Steps, in order:
+`--batch v1`, `v2`, or `v3` picks the batch; each follows its own
+holdout_<batch>_evaluation_plan.json. v3 scores Syntax Reliability v1.5 and
+needs requirements-transformer.txt. Steps, in order:
 
 1. --lock-labels: after labelling and owner review are complete, store the
    hash of the holdout ledger. Prints counts only.
@@ -73,6 +74,13 @@ HOLDOUT_BATCHES = {
         "candidates": ("1.3", "1.4"),
         "decision_pair": ("1.4", "1.3"),
         "positive_outcome": "confirm_v1_4",
+    },
+    # v1.5 needs the optional transformer model (requirements-transformer.txt).
+    "v3": {
+        "batch_id": "cell_reliability_holdout_v3",
+        "candidates": ("1.3", "1.4", "1.5"),
+        "decision_pair": ("1.5", "1.4"),
+        "positive_outcome": "confirm_v1_5",
     },
 }
 

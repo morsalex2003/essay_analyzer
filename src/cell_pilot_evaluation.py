@@ -14,9 +14,11 @@ import math
 
 import numpy as np
 
+from src.nlp.reference_parse import add_reference_parse
 from src.syntax.clauses import detect_clauses
 from src.syntax.reliability import (
     FROZEN_RELIABILITY_VERSION,
+    REFERENCE_PARSE_RELIABILITY_VERSION,
     assess_sentence_reliability,
 )
 from src.syntax.reliability_ml import (
@@ -61,9 +63,13 @@ def heuristic_verdicts(
         essay_id = record["essay_id"]
 
         if essay_id not in clause_summaries:
-            clause_summaries[essay_id] = detect_clauses(
-                parser.document(essay_id)
-            )
+            document = parser.document(essay_id)
+            if (
+                version == REFERENCE_PARSE_RELIABILITY_VERSION
+                and document._.reference_model is None
+            ):
+                add_reference_parse(document)
+            clause_summaries[essay_id] = detect_clauses(document)
 
         result = assess_sentence_reliability(
             parser.sentence(record),

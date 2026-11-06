@@ -6,6 +6,7 @@ from pathlib import Path
 from src.analysis import analyze_writing
 from src.cefr import load_cefr_vocabulary
 from src.efllex import load_efllex_vocabulary
+from src.nlp.reference_parse import ReferenceParserUnavailable
 from src.reader import read_essay
 from src.reporting import build_student_report, build_teacher_report
 from src.revisions import compare_revisions
@@ -60,6 +61,15 @@ def parse_arguments(argv=None):
             "see README)."
         ),
     )
+    parser.add_argument(
+        "--transformer-check",
+        action="store_true",
+        help=(
+            "Check syntax reliability against the optional transformer "
+            "parse (Syntax Reliability v1.5; needs "
+            "requirements-transformer.txt)."
+        ),
+    )
     arguments = parser.parse_args(argv)
 
     if arguments.compare is not None and arguments.report != "metrics":
@@ -93,6 +103,7 @@ def build_output(arguments) -> dict[str, object]:
         "cefr_vocabulary": load_cefr_vocabulary(),
         "efllex_vocabulary": efllex_vocabulary,
         "include_research_metrics": arguments.research,
+        "reference_parse_check": arguments.transformer_check,
     }
     analysis = analyze_writing(
         load_essay_text(arguments.essay),
@@ -133,7 +144,10 @@ def format_output(arguments, result) -> str:
 
 def main(argv=None):
     arguments = parse_arguments(argv)
-    result = build_output(arguments)
+    try:
+        result = build_output(arguments)
+    except ReferenceParserUnavailable as error:
+        raise SystemExit(str(error))
     print(format_output(arguments, result))
 
 
