@@ -256,6 +256,27 @@ same 600 development sentences it reaches precision 0.890 and recall 0.677
 pattern was found on these sentences, so this is an in-sample estimate; an
 out-of-sample check needs the 73 still untouched holdout students.
 
+**Holdout evaluation v2 (2026-11-06).** The plan fixed in
+`holdout_v2_evaluation_plan.json` was run once on 36 of those 73 students:
+432 sentences labelled blind by a new sealed session, 207 labels reviewed by
+the owner; 362 analyzable sentences where v1.2 gives a verdict, 66 of them
+unreliable.
+
+| System | Precision (95% CI) | Recall (95% CI) | FP |
+|---|---|---|---|
+| Frozen v1.2 | 0.826 (0.629-0.930) | 0.288 (0.193-0.406) | 4 |
+| v1.3 | 0.852 (0.675-0.941) | 0.348 (0.245-0.469) | 4 |
+| v1.4 | 0.865 (0.720-0.941) | 0.485 (0.368-0.603) | 5 |
+| Model B (threshold 0.9238) | 0.724 (0.543-0.853) | 0.318 (0.218-0.438) | 8 |
+
+v1.4 catches nine unreliable sentences that v1.3 misses and loses none
+(exact McNemar p = 0.004), with one extra false warning (p = 1.0): the
+pre-registered result is **confirm_v1_4**, and v1.4 stays the default.
+Segmentation errors caught rise from 3 to 12 of 22. Against v1.2, v1.3 adds
+four catches (p = 0.125, again not significant on its own). Non-finite
+inventory errors remain the largest gap (5 of 23 caught). 37 holdout
+students are still untouched.
+
 **Reference annotations.** Existing sentence-level reliability labels are
 provisional model-assisted reference annotations, not independent human gold.
 
@@ -267,10 +288,11 @@ Detailed decisions and their reasons are recorded in
 - No exam score or proficiency level is produced, by design.
 - spaCy `en_core_web_sm` is trained on mostly native-speaker text; learner
   errors can break parses, which is why the reliability layer exists.
-- Reliability rules and ML were evaluated once on independent data (25
-  untouched CELL holdout students, blind labels): every system finds far
-  fewer parser failures there than on development data (v1.2 recall 0.24,
-  development 0.55), mostly missing segmentation and non-finite errors.
+- Reliability rules and ML were evaluated on independent data (two
+  pre-registered CELL holdout batches, 25 and 36 students, blind labels):
+  every system finds far fewer parser failures there than on development
+  data (v1.4 holdout v2 recall 0.49, development 0.68; v1.2 0.29 and 0.55).
+  Non-finite inventory errors are still mostly missed.
 - Lexical and syntactic metrics are unstable on very short texts (for example,
   under about 150 words). Student and teacher reports add a
   `text_length_measurement` note below this threshold, and

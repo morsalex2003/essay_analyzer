@@ -128,6 +128,11 @@
       "batch_id": "cell_reliability_holdout_v1",
       "opened_at": "2026-11-06",
       "reason": "cell_reliability_holdout_v1: single planned evaluation of Syntax Reliability v1.2, v1.3 and Reliability ML Model B on 25 holdout students per holdout_v1_evaluation_plan.json; these 25 students are no longer untouched"
+    },
+    {
+      "batch_id": "cell_reliability_holdout_v2",
+      "opened_at": "2026-11-06",
+      "reason": "cell_reliability_holdout_v2: single pre-registered evaluation of Syntax Reliability v1.4 against v1.3 (36 of the 73 remaining holdout students)"
     }
   ],
   "identity_fields": [

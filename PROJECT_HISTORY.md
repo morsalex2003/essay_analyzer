@@ -1458,6 +1458,43 @@ Only the 73 holdout students outside holdout v1 can test it.
   (checked by comparison only, without printing labels), with the same
   Model B threshold 0.9238.
 
+## CELL Holdout Evaluation v2: v1.4 Confirmed
+
+### Run
+
+The plan was run once on 2026-11-06, in the order it fixes: 36 students,
+432 sentences labelled blind by the sealed session, 207 labels reviewed by
+the owner (both counts are in the private label lock
+`local/holdout_v2/labels_lock.json`), labels locked, the opening
+recorded in `holdout_openings`, then one evaluation. This session never saw
+holdout text or labels; scripts printed counts only. The report is
+`data/syntax_reliability/external/cell/holdout_v2_evaluation.json`.
+
+### Results
+
+362 analyzable sentences where v1.2 gives a verdict, 66 unreliable:
+
+| System | Precision | Recall | TP | FP |
+|---|---|---|---|---|
+| v1.2 | 0.826 | 0.288 | 19 | 4 |
+| v1.3 | 0.852 | 0.348 | 23 | 4 |
+| v1.4 | 0.865 | 0.485 | 32 | 5 |
+| Model B | 0.724 | 0.318 | 21 | 8 |
+
+- Primary pair, v1.4 against v1.3: nine extra catches, none lost
+  (exact McNemar p = 0.0039); one extra false warning (p = 1.0).
+  Decision: `confirm_v1_4`. `analyze_writing()` keeps v1.4.
+- Segmentation errors caught: 12 of 22 with v1.4, 3 with v1.3. The
+  boundary warning generalises outside the sentences it was found on.
+- v1.3 against v1.2: four extra catches, none lost (p = 0.125). With
+  holdout v1 (one extra catch) its signals help a little but have not been
+  shown significant on their own; the batches are not pooled, as planned.
+- Model B is not better than the rules here (eight false warnings).
+- Holdout recall stays well below development recall (v1.4: 0.485 against
+  0.677). Non-finite inventory errors are the largest remaining gap
+  (5 of 23 caught), then finite inventory (13 of 27).
+- 37 holdout students remain untouched.
+
 ## Private-Data Guards for Commits and Agents
 
 ### Problem

@@ -161,3 +161,7 @@ labels, and review follow the v1 steps. `scripts/evaluate_cell_holdout.py`
 takes `--batch v1` or `--batch v2`; each batch has its own label lock,
 opening record, and report.
 
+The batch was evaluated on 2026-11-06 (`holdout_v2_evaluation.json`):
+v1.4 caught nine unreliable sentences that v1.3 missed and lost none
+(exact McNemar p = 0.004), so the pre-registered decision is
+`confirm_v1_4`.
