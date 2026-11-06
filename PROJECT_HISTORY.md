@@ -1388,3 +1388,31 @@ out-of-sample check needs a new evaluation on the 73 remaining holdout
 students. Non-finite inventory misses remain open: on development data they
 are mostly nouns parsed as verbs ("to curriculum", "cyberbullying",
 "reading skills"), which no boundary rule can catch.
+
+## Rejected: Noun-Lemma-as-Verb Warning
+
+### Idea
+
+Most non-finite inventory misses on development data are nouns parsed as
+verbs ("to curriculum demands", "concern to grammar", "bullies" as a
+ccomp). A candidate signal warned when a token tagged `VERB` has a lemma
+that EFLLex lists only as a noun (positive evidence of a noun, not mere
+absence from the list).
+
+### Result (development set, checked before any code change)
+
+The rule fires on 16 sentences: 7 `UNRELIABLE` (4 not yet caught by v1.4)
+and 9 usable. Restricting it to clausal dependents (`xcomp`, `acl`,
+`ccomp`, `advcl`) leaves 3 new catches against 2 new false warnings, so the
+added warnings would be about 60% precise against 89% for v1.4. Most false
+hits come from gaps in the list rather than from the parser: EFLLex has
+only a noun entry for verbs such as "bully", "aid", "curb", "mould", and
+"stem".
+
+### Decision
+
+No signal was added. A tagged frequency list is not reliable enough
+evidence that a word cannot be a verb, and the remaining cases are too few
+to tune a narrower rule without overfitting the development set. Nouns
+parsed as verbs remain the main open recall gap; a stronger parser model is
+the more promising direction than lexical rules.
