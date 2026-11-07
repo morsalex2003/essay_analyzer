@@ -264,11 +264,12 @@ def test_frozen_split_v1_counts_and_author_separation() -> None:
     assert artifact["holdout_open_reason"].startswith(
         "cell_reliability_holdout_v1:"
     )
-    # Holdout v2 opened 36 of the remaining 73 students.
+    # Holdout v2 opened 36 of the remaining 73 students, v3 the last 37.
     openings = artifact["holdout_openings"]
     assert [opening["batch_id"] for opening in openings] == [
         "cell_reliability_holdout_v1",
         "cell_reliability_holdout_v2",
+        "cell_reliability_holdout_v3",
     ]
     assert openings[0] == {
         "batch_id": "cell_reliability_holdout_v1",
@@ -277,6 +278,8 @@ def test_frozen_split_v1_counts_and_author_separation() -> None:
     }
     assert openings[1]["opened_at"] == "2026-11-06"
     assert openings[1]["reason"].startswith("cell_reliability_holdout_v2:")
+    assert openings[2]["opened_at"] == "2026-11-07"
+    assert openings[2]["reason"].startswith("cell_reliability_holdout_v3:")
     assert artifact["counts"] == {
         "essays_development": 2195,
         "essays_total": 2857,

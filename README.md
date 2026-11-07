@@ -306,6 +306,27 @@ catches, two more false warnings. The rule was chosen from four variants on
 these sentences, so this is optimistic; `holdout_v3_evaluation_plan.json`
 fixes its test on the last 37 untouched holdout students.
 
+**Holdout evaluation v3 (2026-11-07).** The plan was run once on those 37
+students: 444 sentences labelled blind by a new sealed session, 175 labels
+reviewed by the owner (all confirmed); 410 analyzable sentences where v1.2
+gives a verdict, 75 of them unreliable.
+
+| System | Precision (95% CI) | Recall (95% CI) | FP |
+|---|---|---|---|
+| Frozen v1.2 | 0.821 (0.644-0.921) | 0.307 (0.214-0.418) | 5 |
+| v1.3 | 0.812 (0.647-0.911) | 0.347 (0.249-0.459) | 6 |
+| v1.4 | 0.824 (0.665-0.917) | 0.373 (0.273-0.486) | 6 |
+| v1.5 (transformer check) | 0.821 (0.673-0.910) | 0.427 (0.321-0.539) | 7 |
+| Model B (threshold 0.9238) | 0.684 (0.525-0.809) | 0.347 (0.249-0.459) | 12 |
+
+v1.5 catches four unreliable sentences that v1.4 misses and loses none
+(exact McNemar p = 0.125), with one extra false warning (p = 1.0): the
+pre-registered result is **inconclusive**. The transformer check stays
+optional as a development candidate, and v1.4 stays the default.
+Non-finite inventory errors caught rise only from 10 to 12 of 30. Against
+v1.2, v1.5 adds nine catches (p = 0.004) and v1.4 five (p = 0.0625). No
+untouched CELL holdout students remain.
+
 **Reference annotations.** Existing sentence-level reliability labels are
 provisional model-assisted reference annotations, not independent human gold.
 
@@ -317,11 +338,14 @@ Detailed decisions and their reasons are recorded in
 - No exam score or proficiency level is produced, by design.
 - spaCy `en_core_web_sm` is trained on mostly native-speaker text; learner
   errors can break parses, which is why the reliability layer exists.
-- Reliability rules and ML were evaluated on independent data (two
-  pre-registered CELL holdout batches, 25 and 36 students, blind labels):
+- Reliability rules and ML were evaluated on independent data (three
+  pre-registered CELL holdout batches, 25, 36, and 37 students, blind
+  labels):
   every system finds far fewer parser failures there than on development
   data (v1.4 holdout v2 recall 0.49, development 0.68; v1.2 0.29 and 0.55).
-  Non-finite inventory errors are still mostly missed.
+  Non-finite inventory errors are still mostly missed, also with the
+  optional transformer check (holdout v3: 12 of 30). The CELL holdout is
+  now fully used; further reliability changes need new independent data.
 - Lexical and syntactic metrics are unstable on very short texts (for example,
   under about 150 words). Student and teacher reports add a
   `text_length_measurement` note below this threshold, and

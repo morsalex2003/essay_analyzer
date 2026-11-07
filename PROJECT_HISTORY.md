@@ -1596,6 +1596,49 @@ was fixed before any selection:
 `heuristic_verdicts()` adds the reference parse for v1.5 on first use of
 each essay. A test checks that every batch's settings match its plan.
 
+## CELL Holdout Evaluation v3: v1.5 Inconclusive
+
+### Run
+
+The plan was run once, in the order it fixes: 37 students (all remaining
+holdout students), 444 sentences labelled blind by the sealed session
+`claude_sealed_holdout_v3`, owner review of 175 rows built with seed
+20261107 (all 175 confirmed, none changed), labels locked, the opening
+recorded in `holdout_openings` on 2026-11-07, then one evaluation. This
+session never saw holdout text or labels; scripts printed counts only. The
+report is `data/syntax_reliability/external/cell/holdout_v3_evaluation.json`.
+
+### Results
+
+410 analyzable sentences where v1.2 gives a verdict, 75 unreliable:
+
+| System | Precision | Recall | TP | FP |
+|---|---|---|---|---|
+| v1.2 | 0.821 | 0.307 | 23 | 5 |
+| v1.3 | 0.812 | 0.347 | 26 | 6 |
+| v1.4 | 0.824 | 0.373 | 28 | 6 |
+| v1.5 | 0.821 | 0.427 | 32 | 7 |
+| Model B | 0.684 | 0.347 | 26 | 12 |
+
+- Primary pair, v1.5 against v1.4: four extra catches, none lost
+  (exact McNemar p = 0.125); one extra false warning (p = 1.0).
+  Decision: `inconclusive`. The transformer check stays optional as a
+  development candidate; v1.4 stays the default.
+- The development gain (8 catches among 31 v1.4 misses) shrank to 4 among
+  47 misses here. Non-finite inventory errors caught rose only from 10 to
+  12 of 30, so the main gap stays open.
+- v1.4 against v1.2: five extra catches, none lost (p = 0.0625); v1.4
+  catches 7 of 17 segmentation errors.
+- Model B again adds more false warnings than catches (12 FP).
+- All 175 review rows were confirmed without change. The labels are
+  owner-reviewed but remain model-assisted.
+
+### Consequence
+
+All 98 CELL holdout students are now opened. No untouched holdout data is
+left, so any further reliability change can only be estimated on
+development data until new independent learner texts are collected.
+
 ## Private-Data Guards for Commits and Agents
 
 ### Problem

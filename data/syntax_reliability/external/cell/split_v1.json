@@ -133,6 +133,11 @@
       "batch_id": "cell_reliability_holdout_v2",
       "opened_at": "2026-11-06",
       "reason": "cell_reliability_holdout_v2: single pre-registered evaluation of Syntax Reliability v1.4 against v1.3 (36 of the 73 remaining holdout students)"
+    },
+    {
+      "batch_id": "cell_reliability_holdout_v3",
+      "opened_at": "2026-11-07",
+      "reason": "cell_reliability_holdout_v3: single pre-registered evaluation of optional Syntax Reliability v1.5 against v1.4 (all 37 remaining holdout students; no untouched holdout students remain)"
     }
   ],
   "identity_fields": [

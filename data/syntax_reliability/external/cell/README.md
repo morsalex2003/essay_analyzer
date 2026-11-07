@@ -180,3 +180,8 @@ The batch is prepared like v2, excluding both earlier batches
 for `local/holdout_v2/essays.jsonl`). The blind packet shows only the
 `en_core_web_sm` parse. `evaluate_cell_holdout.py --batch v3` needs
 `requirements-transformer.txt`.
+
+The batch was evaluated on 2026-11-07 (`holdout_v3_evaluation.json`):
+v1.5 caught four unreliable sentences that v1.4 missed and lost none
+(exact McNemar p = 0.125), so the pre-registered decision is
+`inconclusive`. All 98 holdout students have now been opened.
